@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "City Hospital",
+    "latitude": 33.6844,
+    "longitude": 73.0479
+  },
+  {
+    "id": 2,
+    "name": "Care Medical Center",
+    "latitude": 33.7000,
+    "longitude": 73.0600
+  },
+  {
+    "id": 3,
+    "name": "St. Jude Medical Center",
+    "latitude": 33.6900,
+    "longitude": 73.0550
+  }
+]
