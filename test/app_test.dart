@@ -4,26 +4,51 @@ import 'package:community/core/services/location_service.dart';
 import 'package:community/data/models/water_schedule_model.dart';
 import 'package:community/data/models/hospital_model.dart';
 import 'package:community/data/repositories/community_repository.dart';
+import 'package:community/data/repositories/water_supply_repository.dart';
+import 'package:community/features/water/water_supply_screen.dart';
 import 'package:community/shared/widgets/header_top_app_bar.dart';
 
 void main() {
   group('Business Logic & Algorithm Tests', () {
-    test('WaterScheduleItem sorts Sunday (id 0) as the last day of week (7)', () {
-      final items = [
-        const WaterScheduleItem(id: 0, day: 'Sunday', time: '9:00 AM', status: 'open'),
-        const WaterScheduleItem(id: 1, day: 'Monday', time: '9:00 AM', status: 'open'),
-        const WaterScheduleItem(id: 6, day: 'Saturday', time: '9:00 AM', status: 'open'),
-        const WaterScheduleItem(id: 3, day: 'Wednesday', time: '9:00 AM', status: 'open'),
-      ];
+    test(
+      'WaterScheduleItem sorts Sunday (id 0) as the last day of week (7)',
+      () {
+        final items = [
+          const WaterScheduleItem(
+            id: 0,
+            day: 'Sunday',
+            time: '9:00 AM',
+            status: 'open',
+          ),
+          const WaterScheduleItem(
+            id: 1,
+            day: 'Monday',
+            time: '9:00 AM',
+            status: 'open',
+          ),
+          const WaterScheduleItem(
+            id: 6,
+            day: 'Saturday',
+            time: '9:00 AM',
+            status: 'open',
+          ),
+          const WaterScheduleItem(
+            id: 3,
+            day: 'Wednesday',
+            time: '9:00 AM',
+            status: 'open',
+          ),
+        ];
 
-      items.sort((a, b) => a.sortKey.compareTo(b.sortKey));
+        items.sort((a, b) => a.sortKey.compareTo(b.sortKey));
 
-      expect(items.first.day, 'Monday');
-      expect(items[1].day, 'Wednesday');
-      expect(items[2].day, 'Saturday');
-      expect(items.last.day, 'Sunday');
-      expect(items.last.sortKey, 7);
-    });
+        expect(items.first.day, 'Monday');
+        expect(items[1].day, 'Wednesday');
+        expect(items[2].day, 'Saturday');
+        expect(items.last.day, 'Sunday');
+        expect(items.last.sortKey, 7);
+      },
+    );
 
     test('LocationService accurately converts meters to miles (1 meter = 0.000621371 miles)', () {
       const double distanceMeters = 5000; // 5 kilometers
@@ -48,46 +73,77 @@ void main() {
       expect(weekDates[6].date, 20); // Sunday Sept 20
     });
 
-    test('CommunityRepository shuttle datasets match 13 departures per route', () {
-      final fromLillyA = CommunityRepository.getShuttleRoute(
-        CommunityRepository.shuttleFromLillyA,
-      );
-      final fromMainGate = CommunityRepository.getShuttleRoute(
-        CommunityRepository.shuttleFromMainGate,
-      );
+    test(
+      'CommunityRepository shuttle datasets match 13 departures per route',
+      () {
+        final fromLillyA = CommunityRepository.getShuttleRoute(
+          CommunityRepository.shuttleFromLillyA,
+        );
+        final fromMainGate = CommunityRepository.getShuttleRoute(
+          CommunityRepository.shuttleFromMainGate,
+        );
 
-      expect(fromLillyA.departures.length, 13);
-      expect(fromLillyA.departures.first.time, '07:30 AM');
-      expect(fromLillyA.departures.last.time, '08:00 PM');
-      expect(fromLillyA.directionLabel, 'Lilly A → Main Gate');
+        expect(fromLillyA.departures.length, 13);
+        expect(fromLillyA.departures.first.time, '07:30 AM');
+        expect(fromLillyA.departures.last.time, '08:00 PM');
+        expect(fromLillyA.directionLabel, 'Lilly A → Main Gate');
 
-      expect(fromMainGate.departures.length, 13);
-      expect(fromMainGate.departures.first.time, '07:45 AM');
-      expect(fromMainGate.departures.last.time, '08:30 PM');
-      expect(fromMainGate.directionLabel, 'Main Gate → Lilly A');
+        expect(fromMainGate.departures.length, 13);
+        expect(fromMainGate.departures.first.time, '07:45 AM');
+        expect(fromMainGate.departures.last.time, '08:30 PM');
+        expect(fromMainGate.directionLabel, 'Main Gate → Lilly A');
 
-      final morning = CommunityRepository.getShuttleSchedule(
-        CommunityRepository.shuttleFromLillyA,
-        DateTime(2026, 9, 19, 7, 0),
-      );
-      expect(morning.nextDeparture?.time, '07:30 AM');
-      expect(morning.isTomorrow, isFalse);
-    });
+        final morning = CommunityRepository.getShuttleSchedule(
+          CommunityRepository.shuttleFromLillyA,
+          DateTime(2026, 9, 19, 7, 0),
+        );
+        expect(morning.nextDeparture?.time, '07:30 AM');
+        expect(morning.isTomorrow, isFalse);
+      },
+    );
 
     test('CommunityRepository official updates contains all 7 categories and notices', () {
       final updates = CommunityRepository.getOfficialUpdates();
       expect(updates.length, 7);
 
-      final maintenance = updates.where((u) => u.category == 'Maintenance').toList();
+      final maintenance = updates
+          .where((u) => u.category == 'Maintenance')
+          .toList();
       final safety = updates.where((u) => u.category == 'Safety').toList();
-      final social = updates.where((u) => u.category == 'Social Events').toList();
-      final utilities = updates.where((u) => u.category == 'Utilities').toList();
+      final social = updates
+          .where((u) => u.category == 'Social Events')
+          .toList();
+      final utilities = updates
+          .where((u) => u.category == 'Utilities')
+          .toList();
 
       expect(maintenance.length, 2);
       expect(safety.length, 2);
       expect(social.length, 1);
       expect(utilities.length, 2);
     });
+
+    test(
+      'WaterSupplyRepository uses published Block A September 2026 open days',
+      () {
+        final september = DateTime(2026, 9);
+        final open = WaterSupplyRepository.openDaysFor('A', september);
+        expect(open, {2, 4, 6, 10, 14, 16, 18, 20, 22, 24, 28, 30});
+
+        final schedule = WaterSupplyRepository.scheduleFor(
+          blockId: 'A',
+          month: september,
+        );
+        expect(schedule.monthLabel, 'September 2026');
+        expect(schedule.openDayCount, 12);
+        expect(schedule.isOpen(10), isTrue);
+        expect(schedule.isOpen(11), isFalse);
+
+        final blockB = WaterSupplyRepository.openDaysFor('B', september);
+        expect(blockB.contains(10), isFalse);
+        expect(blockB.contains(11), isTrue);
+      },
+    );
 
     test('HospitalLocation model copyWithDistance works correctly', () {
       const hospital = HospitalLocation(
@@ -110,16 +166,31 @@ void main() {
   });
 
   group('Widget Parity Tests', () {
-    testWidgets('HeaderTopAppBar renders with logo or fallback text', (WidgetTester tester) async {
+    testWidgets('HeaderTopAppBar renders with logo or fallback text', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            appBar: HeaderTopAppBar(),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(appBar: HeaderTopAppBar())),
       );
 
       expect(find.byType(HeaderTopAppBar), findsOneWidget);
+    });
+
+    testWidgets('WaterSupplyScreen shows block selector and current month', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: WaterSupplyScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Water Service'), findsOneWidget);
+      expect(find.text('Select Block'), findsOneWidget);
+      expect(find.text('Block A'), findsOneWidget);
+      expect(find.text('Water Supply Open'), findsOneWidget);
+      expect(find.text('Quick Note'), findsOneWidget);
+
+      await tester.tap(find.text('B'));
+      await tester.pumpAndSettle();
+      expect(find.text('Block B'), findsOneWidget);
     });
   });
 }

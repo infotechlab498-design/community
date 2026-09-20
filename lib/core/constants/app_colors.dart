@@ -47,4 +47,19 @@ class AppColors {
   static const Color textBody = Color(0xFF3F3F46);
   static const Color textWhite = Color(0xFFFFFFFF);
   static const Color borderCard = Color(0x3B216C8C);
+
+  // Water Service (DHA Homes)
+  static const Color waterBlue = Color(0xFF0878C9);
+  static const Color waterDeepBlue = Color(0xFF0759A5);
+  static const Color waterSky = Color(0xFFDDF4FF);
+  static const Color waterGreen = Color(0xFF119C6B);
+  static const Color waterGreenLight = Color(0xFFDDF7ED);
+  static const Color waterOpenFill = Color(0xFFCFF5E5);
+  static const Color waterOpenText = Color(0xFF087A55);
+  static const Color waterClosedFill = Color(0xFFEEF3F8);
+  static const Color waterClosedText = Color(0xFF53657A);
+  static const Color waterInk = Color(0xFF16243A);
+  static const Color waterMuted = Color(0xFF66758A);
+  static const Color waterChipIdle = Color(0xFFF1F5F9);
+  static const Color waterChipBorder = Color(0xFFE2E8F0);
 }

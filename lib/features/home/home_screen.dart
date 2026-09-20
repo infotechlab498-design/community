@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_assets.dart';
 import '../../shared/widgets/header_top_app_bar.dart';
 import '../contacts/contacts_screen.dart';
 import '../gym/gym_timing_screen.dart';
 import '../updates/official_updates_screen.dart';
 import '../water/water_timing_screen.dart';
+import '../water/water_supply_screen.dart';
 import '../shuttle/shuttle_service_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -19,7 +21,10 @@ class HomeScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           feature,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3436)),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2C3436),
+          ),
         ),
         content: const Text(
           'This service is currently being upgraded and will be available soon!',
@@ -28,7 +33,13 @@ class HomeScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK', style: TextStyle(color: Color(0xFF7C3AED), fontWeight: FontWeight.bold)),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: Color(0xFF7C3AED),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -41,7 +52,12 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: const HeaderTopAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 40),
+        padding: const EdgeInsets.only(
+          top: 24,
+          left: 24,
+          right: 24,
+          bottom: 40,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -66,14 +82,17 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Card 1: Water Plant Timing
+            // Card 1: Water Plant Timing (filtration plant)
             InkWell(
               onTap: () {
                 if (onNavigateToTab != null) {
                   onNavigateToTab!(1);
                 } else {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const WaterTimingScreen(showBackButton: true)),
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const WaterTimingScreen(showBackButton: true),
+                    ),
                   );
                 }
               },
@@ -105,9 +124,13 @@ class HomeScreen extends StatelessWidget {
                           fit: BoxFit.contain,
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 7,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFACC15).withAlpha(117), // 0xFACC1575
+                            color: const Color(0xFFFACC15)
+                                .withAlpha(117), // 0xFACC1575
                             borderRadius: BorderRadius.circular(9999),
                           ),
                           child: const Text(
@@ -145,20 +168,105 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Card 2: Shuttle Service
+            // Card 2: Water Supply (block calendar)
             InkWell(
               onTap: () {
                 if (onNavigateToTab != null) {
                   onNavigateToTab!(2);
                 } else {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ShuttleServiceScreen(showBackButton: true)),
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const WaterSupplyScreen(showBackButton: true),
+                    ),
                   );
                 }
               },
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 28,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF0878C9), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFDDF4FF),
+                        borderRadius: BorderRadius.all(Radius.circular(14)),
+                      ),
+                      child: const Icon(
+                        Icons.water_drop_rounded,
+                        color: Color(0xFF0878C9),
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Water Supply',
+                            style: TextStyle(
+                              color: Color(0xFF2C3436),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Check when water supply is available\nin your block.',
+                            style: TextStyle(
+                              color: Color(0xFF596063),
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Card 3: Shuttle Service
+            InkWell(
+              onTap: () {
+                if (onNavigateToTab != null) {
+                  onNavigateToTab!(3);
+                } else {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const ShuttleServiceScreen(showBackButton: true),
+                    ),
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 32,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(16),
@@ -218,12 +326,17 @@ class HomeScreen extends StatelessWidget {
             InkWell(
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ContactsScreen(showBackButton: true)),
+                  MaterialPageRoute(
+                    builder: (_) => const ContactsScreen(showBackButton: true),
+                  ),
                 );
               },
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 32,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(16),
@@ -283,12 +396,18 @@ class HomeScreen extends StatelessWidget {
             InkWell(
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const OfficialUpdatesScreen(showBackButton: true)),
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const OfficialUpdatesScreen(showBackButton: true),
+                  ),
                 );
               },
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 31),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 31,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF7C3AED),
                   borderRadius: BorderRadius.circular(20),
@@ -382,28 +501,38 @@ class HomeScreen extends StatelessWidget {
                   _buildQuickPill(
                     context,
                     title: 'Electricity',
-                    onTap: () => _showComingSoonDialog(context, 'Electricity Management'),
+                    onTap: () => _showComingSoonDialog(
+                      context,
+                      'Electricity Management',
+                    ),
                   ),
                   _buildQuickPill(
                     context,
                     title: 'GYM Timing',
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const GymTimingScreen(showBackButton: true)),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const GymTimingScreen(showBackButton: true),
+                        ),
                       );
                     },
                   ),
                   _buildQuickPill(
                     context,
                     title: 'Waste Mgmt',
-                    onTap: () => _showComingSoonDialog(context, 'Waste Management'),
+                    onTap: () =>
+                        _showComingSoonDialog(context, 'Waste Management'),
                   ),
                   _buildQuickPill(
                     context,
                     title: 'Official Updates',
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const OfficialUpdatesScreen(showBackButton: true)),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const OfficialUpdatesScreen(showBackButton: true),
+                        ),
                       );
                     },
                   ),
@@ -430,12 +559,16 @@ class HomeScreen extends StatelessWidget {
                       height: 160,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                      errorBuilder: (context, error, stackTrace) =>
+                          const SizedBox.shrink(),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFA72368),
                       borderRadius: BorderRadius.circular(6),
@@ -495,7 +628,10 @@ class HomeScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFF7D1E6),
             borderRadius: BorderRadius.circular(9999),
-            border: Border.all(color: const Color(0xFFA72368).withAlpha(40), width: 1),
+            border: Border.all(
+              color: const Color(0xFFA72368).withAlpha(40),
+              width: 1,
+            ),
           ),
           child: Text(
             title,
@@ -510,4 +646,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-

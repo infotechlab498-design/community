@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../home/home_screen.dart';
 import '../water/water_timing_screen.dart';
+import '../water/water_supply_screen.dart';
 import '../shuttle/shuttle_service_screen.dart';
 import '../more/more_screen.dart';
 
@@ -29,7 +31,7 @@ class MainShellScreenState extends State<MainShellScreen> {
   }
 
   void switchTab(int index) {
-    if (index >= 0 && index < 4) {
+    if (index >= 0 && index < 5) {
       setState(() {
         _currentIndex = index;
       });
@@ -41,15 +43,13 @@ class MainShellScreenState extends State<MainShellScreen> {
     final List<Widget> tabs = [
       HomeScreen(onNavigateToTab: switchTab),
       const WaterTimingScreen(),
+      const WaterSupplyScreen(),
       const ShuttleServiceScreen(),
       const MoreScreen(),
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: tabs,
-      ),
+      body: IndexedStack(index: _currentIndex, children: tabs),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -57,18 +57,24 @@ class MainShellScreenState extends State<MainShellScreen> {
         unselectedItemColor: AppColors.textMuted,
         backgroundColor: AppColors.backgroundWhite,
         type: BottomNavigationBarType.fixed,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
         items: const [
           BottomNavigationBarItem(
             icon: FaIcon(FontAwesomeIcons.house, size: 20),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.droplet, size: 20),
+            icon: FaIcon(FontAwesomeIcons.industry, size: 20),
             label: 'Water Timing',
           ),
           BottomNavigationBarItem(
+            icon: FaIcon(FontAwesomeIcons.droplet, size: 20),
+            label: 'Water Supply',
+          ),
+          BottomNavigationBarItem(
             icon: FaIcon(FontAwesomeIcons.bus, size: 20),
-            label: 'Shuttle Service',
+            label: 'Shuttle',
           ),
           BottomNavigationBarItem(
             icon: FaIcon(FontAwesomeIcons.ellipsis, size: 20),
