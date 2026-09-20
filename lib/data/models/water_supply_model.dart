@@ -1,5 +1,8 @@
 enum WaterSupplyStatus { opens, closed, available }
 
+/// Calendar-cell activation for the currently selected block.
+enum WaterDayActivationStatus { open, closed }
+
 class WaterBlock {
   final String id;
   final String name;
@@ -7,18 +10,39 @@ class WaterBlock {
   const WaterBlock({required this.id, required this.name});
 }
 
+/// One published calendar date and which blocks receive supply that day.
+class WaterSupplyDayRecord {
+  final DateTime date;
+  final Set<String> activeBlockIds;
+
+  const WaterSupplyDayRecord({
+    required this.date,
+    required this.activeBlockIds,
+  });
+
+  bool isBlockActive(String blockId) => activeBlockIds.contains(blockId);
+
+  WaterDayActivationStatus statusFor(String blockId) {
+    return isBlockActive(blockId)
+        ? WaterDayActivationStatus.open
+        : WaterDayActivationStatus.closed;
+  }
+}
+
 class WaterDayInfo {
   final DateTime date;
-  final bool isOpen;
+  final WaterDayActivationStatus activationStatus;
   final bool isToday;
   final bool isSelected;
 
   const WaterDayInfo({
     required this.date,
-    required this.isOpen,
+    required this.activationStatus,
     required this.isToday,
     required this.isSelected,
   });
+
+  bool get isOpen => activationStatus == WaterDayActivationStatus.open;
 
   String get accessibilityLabel {
     final month = waterMonthName(date.month);
@@ -47,6 +71,16 @@ class WaterMonthSchedule {
 
   bool isOpen(int day) => openDays.contains(day);
 
+  WaterDayActivationStatus activationStatusFor(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    if (normalized.year != month.year || normalized.month != month.month) {
+      return WaterDayActivationStatus.closed;
+    }
+    return isOpen(normalized.day)
+        ? WaterDayActivationStatus.open
+        : WaterDayActivationStatus.closed;
+  }
+
   String get monthLabel => '${waterMonthName(month.month)} ${month.year}';
 
   static String formatFullDate(DateTime date) {
@@ -55,7 +89,7 @@ class WaterMonthSchedule {
 
   WaterSupplyStatus get badgeStatus {
     if (selectedDate == null) return WaterSupplyStatus.available;
-    return isOpen(selectedDate!.day)
+    return activationStatusFor(selectedDate!) == WaterDayActivationStatus.open
         ? WaterSupplyStatus.opens
         : WaterSupplyStatus.closed;
   }
@@ -81,6 +115,9 @@ class WaterMonthSchedule {
     }
   }
 }
+
+DateTime waterDateKey(DateTime date) =>
+    DateTime(date.year, date.month, date.day);
 
 String waterMonthName(int month) {
   const names = [

@@ -62,4 +62,14 @@ class AppColors {
   static const Color waterMuted = Color(0xFF66758A);
   static const Color waterChipIdle = Color(0xFFF1F5F9);
   static const Color waterChipBorder = Color(0xFFE2E8F0);
+
+  // Prayer Times
+  static const Color prayerNavy = Color(0xFF17205C);
+  static const Color prayerMuted = Color(0xFF667085);
+  static const Color prayerLavender = Color(0xFFF5F0FF);
+  static const Color prayerBackground = Color(0xFFFCFBFF);
+  static const Color prayerBorder = Color(0xFFEDE9FE);
+  static const Color prayerSecondary = Color(0xFF9333EA);
+  static const Color prayerGradientEnd = Color(0xFFA855F7);
+  static const Color prayerArabic = Color(0xFF7C6FB0);
 }

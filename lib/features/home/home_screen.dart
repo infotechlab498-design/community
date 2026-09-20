@@ -8,6 +8,7 @@ import '../updates/official_updates_screen.dart';
 import '../water/water_timing_screen.dart';
 import '../water/water_supply_screen.dart';
 import '../shuttle/shuttle_service_screen.dart';
+import '../namaztiming/prayer_times_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final void Function(int index)? onNavigateToTab;
@@ -232,6 +233,81 @@ class HomeScreen extends StatelessWidget {
                           SizedBox(height: 6),
                           Text(
                             'Check when water supply is available\nin your block.',
+                            style: TextStyle(
+                              color: Color(0xFF596063),
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Namaz Timing
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const PrayerTimesScreen(showBackButton: true),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 28,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF7C3AED), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F0FF),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.nights_stay_rounded,
+                        color: Color(0xFF7C3AED),
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Namaz Timing',
+                            style: TextStyle(
+                              color: Color(0xFF2C3436),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Today\'s prayer times, current namaz,\nand countdown to the next prayer.',
                             style: TextStyle(
                               color: Color(0xFF596063),
                               fontSize: 12,

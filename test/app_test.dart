@@ -3,6 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:community/core/services/location_service.dart';
 import 'package:community/data/models/water_schedule_model.dart';
 import 'package:community/data/models/hospital_model.dart';
+import 'package:community/data/models/water_supply_model.dart';
+import 'package:community/core/utils/time_formatter.dart';
+import 'package:community/data/models/prayer_time_model.dart';
+import 'package:community/data/repositories/prayer_times_repository.dart';
+import 'package:community/features/namaztiming/prayer_times_screen.dart';
 import 'package:community/data/repositories/community_repository.dart';
 import 'package:community/data/repositories/water_supply_repository.dart';
 import 'package:community/features/water/water_supply_screen.dart';
@@ -124,26 +129,254 @@ void main() {
     });
 
     test(
-      'WaterSupplyRepository uses published Block A September 2026 open days',
+      'WaterSupplyRepository uses official September 2026 block schedule',
       () {
         final september = DateTime(2026, 9);
-        final open = WaterSupplyRepository.openDaysFor('A', september);
-        expect(open, {2, 4, 6, 10, 14, 16, 18, 20, 22, 24, 28, 30});
 
-        final schedule = WaterSupplyRepository.scheduleFor(
+        expect(WaterSupplyRepository.openDaysFor('A', september), {
+          4,
+          8,
+          12,
+          16,
+          20,
+          24,
+          28,
+        });
+        expect(WaterSupplyRepository.openDaysFor('B', september), {
+          3,
+          7,
+          11,
+          15,
+          19,
+          23,
+          27,
+        });
+        expect(WaterSupplyRepository.openDaysFor('C', september), {
+          2,
+          6,
+          10,
+          14,
+          18,
+          22,
+          26,
+          30,
+        });
+        expect(WaterSupplyRepository.openDaysFor('E', september), {
+          2,
+          6,
+          10,
+          14,
+          18,
+          22,
+          26,
+          30,
+        });
+
+        final blockA = WaterSupplyRepository.scheduleFor(
           blockId: 'A',
           month: september,
         );
-        expect(schedule.monthLabel, 'September 2026');
-        expect(schedule.openDayCount, 12);
-        expect(schedule.isOpen(10), isTrue);
-        expect(schedule.isOpen(11), isFalse);
+        expect(blockA.monthLabel, 'September 2026');
+        expect(blockA.openDayCount, 7);
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 4)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 8)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 12)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 16)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 20)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 24)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 28)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockA.activationStatusFor(DateTime(2026, 9, 30)),
+          WaterDayActivationStatus.closed,
+        );
 
-        final blockB = WaterSupplyRepository.openDaysFor('B', september);
-        expect(blockB.contains(10), isFalse);
-        expect(blockB.contains(11), isTrue);
+        final blockB = WaterSupplyRepository.scheduleFor(
+          blockId: 'B',
+          month: september,
+        );
+        expect(blockB.openDayCount, 7);
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 3)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 7)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 11)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 15)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 19)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 23)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 27)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockB.activationStatusFor(DateTime(2026, 9, 28)),
+          WaterDayActivationStatus.closed,
+        );
+
+        final blockC = WaterSupplyRepository.scheduleFor(
+          blockId: 'C',
+          month: september,
+        );
+        expect(blockC.openDayCount, 8);
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 2)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 6)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 10)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 14)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 18)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 22)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 26)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockC.activationStatusFor(DateTime(2026, 9, 30)),
+          WaterDayActivationStatus.open,
+        );
+
+        final blockE = WaterSupplyRepository.scheduleFor(
+          blockId: 'E',
+          month: september,
+        );
+        expect(blockE.openDayCount, 8);
+        expect(WaterSupplyRepository.activeBlocksOn(DateTime(2026, 9, 2)), {
+          'C',
+          'E',
+        });
+        expect(
+          blockE.activationStatusFor(DateTime(2026, 9, 2)),
+          WaterDayActivationStatus.open,
+        );
+        expect(
+          blockE.activationStatusFor(DateTime(2026, 9, 30)),
+          WaterDayActivationStatus.open,
+        );
+
+        const closedForAll = [1, 5, 9, 13, 17, 21, 25, 29];
+        for (final day in closedForAll) {
+          final date = DateTime(2026, 9, day);
+          expect(WaterSupplyRepository.activeBlocksOn(date), isEmpty);
+          for (final block in WaterSupplyRepository.blocks) {
+            expect(
+              WaterSupplyRepository.activationStatus(
+                blockId: block.id,
+                date: date,
+              ),
+              WaterDayActivationStatus.closed,
+            );
+          }
+        }
       },
     );
+
+    test('PrayerDaySnapshot identifies current and next prayers including Isha rollover', () {
+      const repo = LocalPrayerTimesRepository();
+      final day = DateTime(2026, 9, 21);
+      final times = repo.timesFor(day);
+
+      final morning = PrayerDaySnapshot.compute(
+        location: PrayerLocation.rawalpindi,
+        prayers: times,
+        now: DateTime(2026, 9, 21, 4, 30),
+      );
+      expect(morning.currentPrayer.type, PrayerType.fajr);
+      expect(morning.nextPrayer.type, PrayerType.dhuhr);
+      expect(morning.rowStatus(times.first), PrayerRowStatus.current);
+
+      final afternoon = PrayerDaySnapshot.compute(
+        location: PrayerLocation.rawalpindi,
+        prayers: times,
+        now: DateTime(2026, 9, 21, 13, 0),
+      );
+      expect(afternoon.currentPrayer.type, PrayerType.dhuhr);
+      expect(afternoon.nextPrayer.type, PrayerType.asr);
+
+      final night = PrayerDaySnapshot.compute(
+        location: PrayerLocation.rawalpindi,
+        prayers: times,
+        now: DateTime(2026, 9, 21, 21, 0),
+      );
+      expect(night.currentPrayer.type, PrayerType.isha);
+      expect(night.nextPrayer.type, PrayerType.fajr);
+      expect(night.nextIsTomorrow, isTrue);
+      expect(night.nextPrayerTime.day, 22);
+
+      final beforeFajr = PrayerDaySnapshot.compute(
+        location: PrayerLocation.rawalpindi,
+        prayers: times,
+        now: DateTime(2026, 9, 21, 3, 0),
+      );
+      expect(beforeFajr.currentPrayer.type, PrayerType.isha);
+      expect(beforeFajr.nextPrayer.type, PrayerType.fajr);
+      expect(beforeFajr.nextIsTomorrow, isFalse);
+
+      expect(
+        TimeFormatter.formatTime(DateTime(2026, 9, 21, 4, 17)),
+        '04:17 AM',
+      );
+      expect(
+        TimeFormatter.formatCountdown(const Duration(hours: 3, minutes: 13)),
+        '3h 13m',
+      );
+      expect(TimeFormatter.formatCountdown(const Duration(minutes: 42)), '42m');
+      expect(
+        TimeFormatter.greetingFor(DateTime(2026, 9, 21, 9, 0)),
+        'Good Morning',
+      );
+    });
 
     test('HospitalLocation model copyWithDistance works correctly', () {
       const hospital = HospitalLocation(
@@ -191,6 +424,21 @@ void main() {
       await tester.tap(find.text('B'));
       await tester.pumpAndSettle();
       expect(find.text('Block B'), findsOneWidget);
+    });
+
+    testWidgets('PrayerTimesScreen shows greeting and today\'s prayers', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: PrayerTimesScreen()));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Assalamu Alaikum 👋'), findsOneWidget);
+      expect(find.text('CURRENT PRAYER'), findsOneWidget);
+      expect(find.text('Fajr'), findsWidgets);
+      expect(find.text('Dhuhr'), findsWidgets);
+      expect(find.text('Isha'), findsWidgets);
+      expect(find.text('Next Prayer'), findsOneWidget);
     });
   });
 }

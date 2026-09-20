@@ -243,7 +243,7 @@ class _WaterServiceHeader extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Water Supply',
+                              'Water Service',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 21,
@@ -789,7 +789,7 @@ class _WaterCalendar extends StatelessWidget {
       cells.add(
         WaterDayInfo(
           date: date,
-          isOpen: schedule.isOpen(day),
+          activationStatus: schedule.activationStatusFor(date),
           isToday: date == today,
           isSelected: selected,
         ),
@@ -857,22 +857,26 @@ class _WaterCalendarDay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOpen = day.activationStatus == WaterDayActivationStatus.open;
     final Color fill;
     final Color text;
-    if (day.isOpen) {
-      fill = day.isSelected ? const Color(0xFFA8EBD0) : AppColors.waterOpenFill;
-      text = AppColors.waterOpenText;
-    } else {
-      fill = day.isSelected
-          ? const Color(0xFFDCE6EF)
-          : AppColors.waterClosedFill;
-      text = AppColors.waterClosedText;
+    switch (day.activationStatus) {
+      case WaterDayActivationStatus.open:
+        fill = day.isSelected
+            ? const Color(0xFFA8EBD0)
+            : AppColors.waterOpenFill;
+        text = AppColors.waterOpenText;
+      case WaterDayActivationStatus.closed:
+        fill = day.isSelected
+            ? const Color(0xFFDCE6EF)
+            : AppColors.waterClosedFill;
+        text = AppColors.waterClosedText;
     }
 
     Border? border;
     if (day.isSelected) {
       border = Border.all(
-        color: day.isOpen ? AppColors.waterGreen : AppColors.waterMuted,
+        color: isOpen ? AppColors.waterGreen : AppColors.waterMuted,
         width: 2,
       );
     } else if (day.isToday) {
@@ -912,7 +916,7 @@ class _WaterCalendarDay extends StatelessWidget {
                       width: 12,
                       height: 2,
                       decoration: BoxDecoration(
-                        color: day.isOpen
+                        color: isOpen
                             ? AppColors.waterBlue
                             : AppColors.waterMuted,
                         borderRadius: BorderRadius.circular(2),
@@ -936,7 +940,8 @@ class _DateDetailPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final open = schedule.isOpen(date.day);
+    final open =
+        schedule.activationStatusFor(date) == WaterDayActivationStatus.open;
     return Semantics(
       liveRegion: true,
       child: Container(

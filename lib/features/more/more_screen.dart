@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../shared/widgets/header_top_app_bar.dart';
 import '../contacts/contacts_screen.dart';
@@ -7,6 +8,7 @@ import '../gym/gym_timing_screen.dart';
 import '../updates/official_updates_screen.dart';
 import '../help/help_screen.dart';
 import '../privacy/privacy_policy_screen.dart';
+import '../namaztiming/prayer_times_screen.dart';
 
 class MoreSectionItem {
   final String title;
@@ -28,6 +30,11 @@ class MoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<MoreSectionItem> sections = [
+      const MoreSectionItem(
+        title: 'Namaz Timing',
+        icon: FontAwesomeIcons.moon,
+        destination: PrayerTimesScreen(showBackButton: true),
+      ),
       const MoreSectionItem(
         title: 'Contacts',
         icon: FontAwesomeIcons.addressBook,
@@ -67,9 +74,8 @@ class MoreScreen extends StatelessWidget {
 
           return InkWell(
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => item.destination),
-              );
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => item.destination));
             },
             borderRadius: BorderRadius.circular(16),
             child: Container(
