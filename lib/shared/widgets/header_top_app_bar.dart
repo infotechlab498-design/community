@@ -23,17 +23,19 @@ class HeaderTopAppBar extends StatelessWidget implements PreferredSizeWidget {
         height: 66,
         color: AppColors.backgroundWhite,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        alignment: Alignment.centerLeft,
-        child: Row(
+        child: Stack(
+          alignment: Alignment.center,
           children: [
             if (showBackButton)
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textDark),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onPressed: onBackPressed ?? () => Navigator.of(context).maybePop(),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textDark),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: onBackPressed ?? () => Navigator.of(context).maybePop(),
+                ),
               ),
-            if (showBackButton) const SizedBox(width: 12),
             Image.asset(
               AppAssets.hubLogo,
               height: 44,

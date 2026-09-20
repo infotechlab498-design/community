@@ -22,41 +22,83 @@ class CommunityRepository {
     return jsonList.map((item) => HospitalLocation.fromJson(item)).toList();
   }
 
-  /// Returns shuttle departures for "Route A" (From Lilly A) or "Route B" (From Main Gate)
-  static List<ShuttleDeparture> getShuttleDepartures(String routeName) {
-    if (routeName == 'Route A') {
-      return const [
-        ShuttleDeparture(id: 1, time: '07:15 AM', terminal: '07:30 AM', status: 'active'),
-        ShuttleDeparture(id: 2, time: '08:00 AM', terminal: '08:30 AM', status: 'scheduled'),
-        ShuttleDeparture(id: 4, time: '09:00 AM', terminal: '09:30 AM', status: 'terminal'),
-        ShuttleDeparture(id: 5, time: '10:00 AM', terminal: '10:30 AM', status: 'terminal'),
-        ShuttleDeparture(id: 6, time: '11:00 AM', terminal: '11:30 AM', status: 'terminal'),
-        ShuttleDeparture(id: 7, time: '12:00 PM', terminal: '12:30 PM', status: 'terminal'),
-        ShuttleDeparture(id: 8, time: '01:30 PM', terminal: '02:00 PM', status: 'terminal'),
-        ShuttleDeparture(id: 9, time: '02:30 PM', terminal: '03:00 PM', status: 'terminal'),
-        ShuttleDeparture(id: 10, time: '03:30 PM', terminal: '04:00 PM', status: 'terminal'),
-        ShuttleDeparture(id: 11, time: '04:30 PM', terminal: '05:00 PM', status: 'terminal'),
-        ShuttleDeparture(id: 12, time: '05:15 PM', terminal: '06:00 PM', status: 'terminal'),
-        ShuttleDeparture(id: 13, time: '06:00 PM', terminal: '06:00 PM', status: 'terminal'),
-        ShuttleDeparture(id: 14, time: '07:30 PM', terminal: '08:00 PM', status: 'terminal'),
-      ];
-    } else {
-      return const [
-        ShuttleDeparture(id: 1, time: '07:30 AM', terminal: '04:00 PM', status: 'active'),
-        ShuttleDeparture(id: 2, time: '08:30 AM', terminal: '05:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 3, time: '09:30 AM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 4, time: '10:30 AM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 5, time: '11:30 AM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 6, time: '12:30 PM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 7, time: '02:00 PM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 8, time: '03:00 PM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 9, time: '04:00 PM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 10, time: '05:00 PM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 11, time: '05:45 PM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 12, time: '06:30 PM', terminal: '06:00 PM', status: 'scheduled'),
-        ShuttleDeparture(id: 13, time: '08:00 PM', terminal: '06:00 PM', status: 'scheduled'),
-      ];
+  static const String shuttleFromLillyA = 'lillyA';
+  static const String shuttleFromMainGate = 'mainGate';
+
+  /// Lilly A → Main Gate departure times.
+  static const List<ShuttleDeparture> lillyAToMainGate = [
+    ShuttleDeparture(id: 1, time: '07:30 AM'),
+    ShuttleDeparture(id: 2, time: '08:00 AM'),
+    ShuttleDeparture(id: 3, time: '09:00 AM'),
+    ShuttleDeparture(id: 4, time: '10:00 AM'),
+    ShuttleDeparture(id: 5, time: '11:00 AM'),
+    ShuttleDeparture(id: 6, time: '12:00 PM'),
+    ShuttleDeparture(id: 7, time: '02:15 PM'),
+    ShuttleDeparture(id: 8, time: '03:00 PM'),
+    ShuttleDeparture(id: 9, time: '04:00 PM'),
+    ShuttleDeparture(id: 10, time: '05:15 PM'),
+    ShuttleDeparture(id: 11, time: '06:15 PM'),
+    ShuttleDeparture(id: 12, time: '07:15 PM'),
+    ShuttleDeparture(id: 13, time: '08:00 PM'),
+  ];
+
+  /// Main Gate → Lilly A departure times.
+  static const List<ShuttleDeparture> mainGateToLillyA = [
+    ShuttleDeparture(id: 1, time: '07:45 AM'),
+    ShuttleDeparture(id: 2, time: '08:30 AM'),
+    ShuttleDeparture(id: 3, time: '09:30 AM'),
+    ShuttleDeparture(id: 4, time: '10:30 AM'),
+    ShuttleDeparture(id: 5, time: '11:30 AM'),
+    ShuttleDeparture(id: 6, time: '12:30 PM'),
+    ShuttleDeparture(id: 7, time: '02:45 PM'),
+    ShuttleDeparture(id: 8, time: '03:30 PM'),
+    ShuttleDeparture(id: 9, time: '04:30 PM'),
+    ShuttleDeparture(id: 10, time: '05:45 PM'),
+    ShuttleDeparture(id: 11, time: '06:45 PM'),
+    ShuttleDeparture(id: 12, time: '07:30 PM'),
+    ShuttleDeparture(id: 13, time: '08:30 PM'),
+  ];
+
+  static ShuttleRoute getShuttleRoute(String routeId) {
+    if (routeId == shuttleFromMainGate) {
+      return const ShuttleRoute(
+        id: shuttleFromMainGate,
+        toggleLabel: 'From Main Gate',
+        origin: 'Main Gate',
+        destination: 'Lilly A',
+        departures: mainGateToLillyA,
+      );
     }
+    return const ShuttleRoute(
+      id: shuttleFromLillyA,
+      toggleLabel: 'From Lilly A',
+      origin: 'Lilly A',
+      destination: 'Main Gate',
+      departures: lillyAToMainGate,
+    );
+  }
+
+  static ShuttleScheduleSnapshot getShuttleSchedule(
+    String routeId, [
+    DateTime? now,
+  ]) {
+    final route = getShuttleRoute(routeId);
+    final current = now ?? DateTime.now();
+    final nowMinutes = current.hour * 60 + current.minute;
+    ShuttleDeparture? next;
+    for (final departure in route.departures) {
+      if (departure.minutesFromMidnight > nowMinutes) {
+        next = departure;
+        break;
+      }
+    }
+    final isTomorrow = next == null && route.departures.isNotEmpty;
+    return ShuttleScheduleSnapshot(
+      route: route,
+      now: current,
+      nextDeparture: isTomorrow ? route.departures.first : next,
+      isTomorrow: isTomorrow,
+    );
   }
 
   /// Returns official community update notices

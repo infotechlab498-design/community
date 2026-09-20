@@ -6,6 +6,7 @@ import '../contacts/contacts_screen.dart';
 import '../gym/gym_timing_screen.dart';
 import '../updates/official_updates_screen.dart';
 import '../help/help_screen.dart';
+import '../privacy/privacy_policy_screen.dart';
 
 class MoreSectionItem {
   final String title;
@@ -46,6 +47,11 @@ class MoreScreen extends StatelessWidget {
         title: 'Help & Support',
         icon: FontAwesomeIcons.circleQuestion,
         destination: HelpScreen(showBackButton: true),
+      ),
+      const MoreSectionItem(
+        title: 'Privacy Policy',
+        icon: FontAwesomeIcons.shieldHalved,
+        destination: PrivacyPolicyScreen(showBackButton: true),
       ),
     ];
 

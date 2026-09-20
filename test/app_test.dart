@@ -49,16 +49,29 @@ void main() {
     });
 
     test('CommunityRepository shuttle datasets match 13 departures per route', () {
-      final routeA = CommunityRepository.getShuttleDepartures('Route A');
-      final routeB = CommunityRepository.getShuttleDepartures('Route B');
+      final fromLillyA = CommunityRepository.getShuttleRoute(
+        CommunityRepository.shuttleFromLillyA,
+      );
+      final fromMainGate = CommunityRepository.getShuttleRoute(
+        CommunityRepository.shuttleFromMainGate,
+      );
 
-      expect(routeA.length, 13);
-      expect(routeA.first.time, '07:15 AM');
-      expect(routeA.last.time, '07:30 PM');
+      expect(fromLillyA.departures.length, 13);
+      expect(fromLillyA.departures.first.time, '07:30 AM');
+      expect(fromLillyA.departures.last.time, '08:00 PM');
+      expect(fromLillyA.directionLabel, 'Lilly A → Main Gate');
 
-      expect(routeB.length, 13);
-      expect(routeB.first.time, '07:30 PM');
-      expect(routeB.last.time, '08:00 PM');
+      expect(fromMainGate.departures.length, 13);
+      expect(fromMainGate.departures.first.time, '07:45 AM');
+      expect(fromMainGate.departures.last.time, '08:30 PM');
+      expect(fromMainGate.directionLabel, 'Main Gate → Lilly A');
+
+      final morning = CommunityRepository.getShuttleSchedule(
+        CommunityRepository.shuttleFromLillyA,
+        DateTime(2026, 9, 19, 7, 0),
+      );
+      expect(morning.nextDeparture?.time, '07:30 AM');
+      expect(morning.isTomorrow, isFalse);
     });
 
     test('CommunityRepository official updates contains all 7 categories and notices', () {

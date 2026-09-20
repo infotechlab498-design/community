@@ -1,0 +1,25 @@
+# NeighborHub Play Console listing copy
+# Package: com.neighborhub1.app
+
+App name:
+NeighborHub
+
+Package name:
+com.neighborhub1.app
+
+Short description (max 80 characters):
+Water timings, shuttle, emergency contacts, and community updates in one place.
+
+Full description:
+NeighborHub is a community information app for residents. Check water plant timings, shuttle service schedules, official neighborhood updates, and essential emergency contacts without hunting through notices or group chats.
+
+What you can do:
+• See today’s water distribution hours and the weekly plant schedule
+• View shuttle routes and departure times
+• Call fire, medical, police, and on-site maintenance numbers quickly
+• Read official updates about maintenance, parking, and community events
+• Find the nearest hospital on the map (optional location permission)
+
+Location is used only to estimate distance to nearby hospitals. You can deny location access and still use water timings, shuttle info, contacts, and updates.
+
+NeighborHub is built for everyday community services — information at a glance.
