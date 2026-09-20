@@ -599,10 +599,10 @@ class _OfficialUpdatesScreenState extends State<OfficialUpdatesScreen> {
             children: [
               // Badge & Date Row
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
+                  Expanded(
+                    child: Row(
+                      children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
@@ -635,26 +635,37 @@ class _OfficialUpdatesScreenState extends State<OfficialUpdatesScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        notice.category,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: Text(
+                          notice.category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  Text(
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
                     notice.date,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
                     style: const TextStyle(
                       color: Color(0xFFE11D48),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
               const SizedBox(height: 12),
 
               // Title
@@ -777,7 +788,6 @@ class _OfficialUpdatesScreenState extends State<OfficialUpdatesScreen> {
                   children: [
                     // Tag & Timestamp
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -795,12 +805,18 @@ class _OfficialUpdatesScreenState extends State<OfficialUpdatesScreen> {
                             ),
                           ),
                         ),
-                        Text(
-                          notice.date,
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            notice.date,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
