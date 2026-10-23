@@ -42,7 +42,7 @@ class MainShellScreenState extends State<MainShellScreen> {
   Widget build(BuildContext context) {
     final List<Widget> tabs = [
       HomeScreen(onNavigateToTab: switchTab),
-      const WaterTimingScreen(),
+      WaterTimingScreen(isActive: _currentIndex == 1),
       const WaterSupplyScreen(),
       const ShuttleServiceScreen(),
       const MoreScreen(),

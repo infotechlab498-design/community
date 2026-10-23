@@ -3,7 +3,6 @@ class AppAssets {
   AppAssets._();
 
   static const String _images = 'assets/images';
-  static const String _data = 'assets/data';
 
   // Branding & Navigation
   static const String hubLogo = '$_images/Hublogo.png';
@@ -57,6 +56,4 @@ class AppAssets {
   static const String rightMoveIcon = '$_images/rightMoveicon.png';
 
   // JSON Datasets
-  static const String waterScheduleJson = '$_data/waterSchedule.json';
-  static const String hospitalsJson = '$_data/hospitals.json';
 }

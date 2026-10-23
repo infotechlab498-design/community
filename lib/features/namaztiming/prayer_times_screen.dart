@@ -5,22 +5,23 @@ import '../../core/constants/app_spacing.dart';
 import '../../data/models/prayer_time_model.dart';
 import '../../data/repositories/prayer_times_repository.dart';
 import 'prayer_details_screen.dart';
-import 'prayer_location_screen.dart';
 import 'prayer_preferences.dart';
 import 'prayer_settings_screen.dart';
 import 'widgets/prayer_times_widgets.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   final bool showBackButton;
+  final PrayerTimesRepository? repository;
 
-  const PrayerTimesScreen({super.key, this.showBackButton = true});
+  const PrayerTimesScreen({super.key, this.showBackButton = true, this.repository});
 
   @override
   State<PrayerTimesScreen> createState() => _PrayerTimesScreenState();
 }
 
 class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
-  final PrayerTimesRepository _repository = const LocalPrayerTimesRepository();
+  late final PrayerTimesRepository _repository =
+      widget.repository ?? PrayerTimesRepository();
   final PrayerPreferences _preferences = PrayerPreferences.instance;
 
   PrayerDaySnapshot? _snapshot;
@@ -41,7 +42,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   }
 
   void _onPreferencesChanged() {
-    _load();
+    if (mounted) setState(() {});
   }
 
   Future<void> _load() async {
@@ -50,9 +51,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       _error = false;
     });
     try {
-      final snapshot = await _repository.loadSchedule(
-        location: _preferences.location,
-      );
+      final snapshot = await _repository.loadSchedule();
       if (!mounted) return;
       setState(() {
         _snapshot = snapshot;
@@ -78,17 +77,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _openLocation() async {
-    final selected = await Navigator.of(context).push<PrayerLocation>(
-      MaterialPageRoute(
-        builder: (_) => PrayerLocationScreen(current: _preferences.location),
-      ),
-    );
-    if (selected != null) {
-      _preferences.setLocation(selected);
-    }
   }
 
   void _openSettings() {
@@ -172,10 +160,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             PrayerGreeting(now: now),
-            PrayerLocationButton(
-              location: snapshot.location,
-              onTap: _openLocation,
-            ),
+            const PrayerTimetableLabel(),
             const SizedBox(height: AppSpacing.lg),
             CurrentPrayerCard(
               snapshot: snapshot,
@@ -229,7 +214,7 @@ class _ErrorCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           const Text(
-            'Check your connection or location settings.',
+            'Check your connection and try again.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.prayerMuted, fontSize: 13),
           ),

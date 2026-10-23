@@ -13,12 +13,6 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.inputStream().use { localProperties.load(it) }
-}
-
 android {
     namespace = "com.neighborhub1.app"
     compileSdk = flutter.compileSdkVersion
@@ -35,8 +29,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["mapsApiKey"] =
-            localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
     signingConfigs {

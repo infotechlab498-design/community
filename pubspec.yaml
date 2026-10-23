@@ -16,10 +16,10 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.3+4
 
 environment:
-  sdk: ^3.13.1
+  sdk: ^3.13.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -35,10 +35,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.2
-  geolocator: ^14.0.3
-  google_maps_flutter: ^2.18.1
   font_awesome_flutter: ^11.0.0
   http: ^1.6.0
+  flutter_secure_storage: ^11.2.0
 
 dev_dependencies:
   flutter_test:
@@ -50,6 +49,28 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+# Generate launcher icons / favicon from NeighborHub brand mark:
+# dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: play-store/icons/icon-source.png
+    background_color: "#FFFFFF"
+    theme_color: "#7B2CBF"
+  windows:
+    generate: true
+    image_path: play-store/icons/icon-source.png
+  macos:
+    generate: true
+    image_path: play-store/icons/icon-source.png
+  image_path: play-store/icons/icon-source.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: play-store/icons/icon-source.png
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -63,7 +84,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/data/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

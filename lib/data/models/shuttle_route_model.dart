@@ -1,47 +1,55 @@
+import '../../core/network/api_client.dart';
+
 enum ShuttleTripStatus { departed, next, upcoming }
 
 class ShuttleDeparture {
   final int id;
-  final String time;
 
-  const ShuttleDeparture({
-    required this.id,
-    required this.time,
-  });
+  /// 24-hour "HH:mm" as stored by the API.
+  final String time24;
 
-  /// Minutes from midnight for the printed 12-hour time (e.g. 07:15 AM).
-  int get minutesFromMidnight {
-    final match = RegExp(r'^(\d{1,2}):(\d{2})\s*(AM|PM)$', caseSensitive: false)
-        .firstMatch(time.trim());
-    if (match == null) return 0;
+  const ShuttleDeparture({required this.id, required this.time24});
 
-    var hour = int.parse(match.group(1)!);
-    final minute = int.parse(match.group(2)!);
-    final period = match.group(3)!.toUpperCase();
-
-    if (period == 'AM') {
-      if (hour == 12) hour = 0;
-    } else if (hour != 12) {
-      hour += 12;
-    }
-    return hour * 60 + minute;
+  factory ShuttleDeparture.fromJson(Map<String, dynamic> json) {
+    return ShuttleDeparture(
+      id: json['id'] as int,
+      time24: json['time'] as String,
+    );
   }
+
+  /// Display form, e.g. "07:30 AM".
+  String get time => formatApiTime(time24);
+
+  int get minutesFromMidnight => apiTimeToMinutes(time24);
 }
 
 class ShuttleRoute {
   final String id;
-  final String toggleLabel;
   final String origin;
   final String destination;
   final List<ShuttleDeparture> departures;
 
   const ShuttleRoute({
     required this.id,
-    required this.toggleLabel,
     required this.origin,
     required this.destination,
     required this.departures,
   });
+
+  factory ShuttleRoute.fromJson(Map<String, dynamic> json) {
+    final departures = (json['departures'] as List? ?? const [])
+        .map((e) => ShuttleDeparture.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList()
+      ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
+    return ShuttleRoute(
+      id: json['id'] as String,
+      origin: json['origin'] as String,
+      destination: json['destination'] as String,
+      departures: departures,
+    );
+  }
+
+  String get toggleLabel => 'From $origin';
 
   String get directionLabel => '$origin → $destination';
 }
@@ -58,6 +66,25 @@ class ShuttleScheduleSnapshot {
     required this.nextDeparture,
     required this.isTomorrow,
   });
+
+  factory ShuttleScheduleSnapshot.compute(ShuttleRoute route, [DateTime? now]) {
+    final current = now ?? DateTime.now();
+    final nowMinutes = current.hour * 60 + current.minute;
+    ShuttleDeparture? next;
+    for (final departure in route.departures) {
+      if (departure.minutesFromMidnight > nowMinutes) {
+        next = departure;
+        break;
+      }
+    }
+    final isTomorrow = next == null && route.departures.isNotEmpty;
+    return ShuttleScheduleSnapshot(
+      route: route,
+      now: current,
+      nextDeparture: isTomorrow ? route.departures.first : next,
+      isTomorrow: isTomorrow,
+    );
+  }
 
   ShuttleTripStatus statusFor(ShuttleDeparture departure) {
     if (isTomorrow || nextDeparture == null) {

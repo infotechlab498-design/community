@@ -1,66 +1,84 @@
+import '../../core/network/api_client.dart';
 import '../models/prayer_time_model.dart';
 
-abstract class PrayerTimesRepository {
-  Future<PrayerDaySnapshot> loadSchedule({
-    required PrayerLocation location,
-    DateTime? now,
-  });
-}
+class PrayerTimesRepository {
+  PrayerTimesRepository({ApiClient? client}) : _api = client ?? ApiClient();
 
-/// Community timetable for NeighborHub. Times match the published
-/// Rawalpindi reference and can later be replaced by a calculation API.
-class LocalPrayerTimesRepository implements PrayerTimesRepository {
-  const LocalPrayerTimesRepository();
+  final ApiClient _api;
 
-  static DateTime _at(DateTime day, int hour, int minute) {
-    return DateTime(day.year, day.month, day.day, hour, minute);
+  static const Map<String, String> _arabicNames = {
+    'Fajr': 'الفجر',
+    'Dhuhr': 'الظهر',
+    'Asr': 'العصر',
+    'Maghrib': 'المغرب',
+    'Isha': 'العشاء',
+    'Jummah': 'الجمعة',
+  };
+
+  static const Map<String, PrayerType> _dailyTypes = {
+    'Fajr': PrayerType.fajr,
+    'Dhuhr': PrayerType.dhuhr,
+    'Asr': PrayerType.asr,
+    'Maghrib': PrayerType.maghrib,
+    'Isha': PrayerType.isha,
+  };
+
+  Future<List<PrayerTimeSetting>> fetchSettings() async {
+    final decoded = await _api.get('/api/prayer-times');
+    if (decoded is! List) {
+      throw const ApiException('The API returned invalid prayer times.');
+    }
+    return decoded
+        .map((e) => PrayerTimeSetting.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList()
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
   }
 
-  List<PrayerTime> timesFor(DateTime day) {
-    return [
-      PrayerTime(
-        type: PrayerType.fajr,
-        name: 'Fajr',
-        arabicName: 'الفجر',
-        startTime: _at(day, 4, 17),
-      ),
-      PrayerTime(
-        type: PrayerType.dhuhr,
-        name: 'Dhuhr',
-        arabicName: 'الظهر',
-        startTime: _at(day, 12, 30),
-      ),
-      PrayerTime(
-        type: PrayerType.asr,
-        name: 'Asr',
-        arabicName: 'العصر',
-        startTime: _at(day, 15, 45),
-      ),
-      PrayerTime(
-        type: PrayerType.maghrib,
-        name: 'Maghrib',
-        arabicName: 'المغرب',
-        startTime: _at(day, 18, 15),
-      ),
-      PrayerTime(
-        type: PrayerType.isha,
-        name: 'Isha',
-        arabicName: 'العشاء',
-        startTime: _at(day, 20, 0),
-      ),
-    ];
-  }
-
-  @override
-  Future<PrayerDaySnapshot> loadSchedule({
-    required PrayerLocation location,
-    DateTime? now,
-  }) async {
-    final clock = now ?? DateTime.now();
-    return PrayerDaySnapshot.compute(
-      location: location,
-      prayers: timesFor(clock),
-      now: clock,
+  Future<List<PrayerTimeSetting>> saveSettings(
+      List<PrayerTimeSetting> settings) async {
+    final decoded = await _api.put(
+      '/api/admin/prayer-times',
+      auth: true,
+      body: {
+        'prayers': [
+          for (final s in settings) {'id': s.id, 'time': s.time},
+        ],
+      },
     );
+    return (decoded as List)
+        .map((e) => PrayerTimeSetting.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<PrayerDaySnapshot> loadSchedule({DateTime? now}) async {
+    final clock = now ?? DateTime.now();
+    return buildSnapshot(await fetchSettings(), clock);
+  }
+
+  /// Builds today's five daily prayers. On Fridays the Dhuhr row shows Jummah.
+  static PrayerDaySnapshot buildSnapshot(
+      List<PrayerTimeSetting> settings, DateTime now) {
+    final byName = {for (final s in settings) s.name: s};
+    final isFriday = now.weekday == DateTime.friday;
+
+    final prayers = <PrayerTime>[];
+    for (final entry in _dailyTypes.entries) {
+      var setting = byName[entry.key];
+      if (entry.value == PrayerType.dhuhr && isFriday && byName['Jummah'] != null) {
+        setting = byName['Jummah'];
+      }
+      if (setting == null) {
+        throw ApiException('${entry.key} time is missing.');
+      }
+      final minutes = apiTimeToMinutes(setting.time);
+      prayers.add(PrayerTime(
+        type: entry.value,
+        name: setting.name,
+        arabicName: _arabicNames[setting.name] ?? '',
+        startTime: DateTime(now.year, now.month, now.day, minutes ~/ 60, minutes % 60),
+      ));
+    }
+
+    return PrayerDaySnapshot.compute(prayers: prayers, now: now);
   }
 }

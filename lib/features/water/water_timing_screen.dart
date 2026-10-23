@@ -1,24 +1,34 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
-import '../../core/utils/phone_launcher.dart';
+import '../../core/network/api_client.dart';
+import '../../data/models/contact_model.dart';
+import '../../data/repositories/contacts_repository.dart';
+import '../../shared/widgets/async_state_views.dart';
 import '../../data/models/water_schedule_model.dart';
 import '../../data/repositories/community_repository.dart';
 import '../../shared/widgets/header_top_app_bar.dart';
 
 class WaterTimingScreen extends StatefulWidget {
   final bool showBackButton;
+  final bool isActive;
 
-  const WaterTimingScreen({super.key, this.showBackButton = false});
+  const WaterTimingScreen({
+    super.key,
+    this.showBackButton = false,
+    this.isActive = true,
+  });
 
   @override
   State<WaterTimingScreen> createState() => _WaterTimingScreenState();
 }
 
 class _WaterTimingScreenState extends State<WaterTimingScreen> {
+  final ContactsRepository _contactsRepository = ContactsRepository();
   List<WaterScheduleItem> _schedule = [];
+  List<CommunityContact> _supportContacts = const [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -26,23 +36,44 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
     _loadData();
   }
 
+  @override
+  void didUpdateWidget(WaterTimingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _loadData();
+    }
+  }
+
   Future<void> _loadData() async {
+    if (_schedule.isEmpty) setState(() => _isLoading = true);
+    _loadSupportContacts();
     try {
       final data = await CommunityRepository.loadWaterSchedule();
-      // Sunday-to-last sorting matching React Native: (a.id === 0 ? 7 : a.id) - (b.id === 0 ? 7 : b.id)
       data.sort((a, b) => a.sortKey.compareTo(b.sortKey));
       if (mounted) {
         setState(() {
           _schedule = data;
           _isLoading = false;
+          _error = null;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _error = 'Could not load the saved water schedule.';
         });
       }
+    }
+  }
+
+  Future<void> _loadSupportContacts() async {
+    try {
+      final contacts = await _contactsRepository.fetchContacts(
+          category: ContactCategory.water);
+      if (mounted) setState(() => _supportContacts = contacts);
+    } on ApiException {
+      // The schedule is still shown without the support number.
     }
   }
 
@@ -66,6 +97,7 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
           orElse: () => null,
         );
     final todayTimeText = todayItem?.time ?? '9:00 AM – 11:00 AM & 4:00 PM - 8:00 PM';
+    final todayIsOpen = (todayItem?.status ?? 'Open').toLowerCase() != 'closed';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -142,9 +174,9 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Open today',
-                                style: TextStyle(
+                              Text(
+                                todayIsOpen ? 'Open today' : 'Closed today',
+                                style: const TextStyle(
                                   color: AppColors.waterDarkGreen,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -198,7 +230,15 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Weekly Schedule Table (Monday through Sunday)
+                  if (_error != null && _schedule.isEmpty)
+                    ErrorStateView(message: _error!, onRetry: _loadData)
+                  else if (_schedule.isEmpty)
+                    const EmptyStateView(
+                      icon: Icons.water_drop_outlined,
+                      title: 'No water timings yet',
+                      message: 'The weekly water schedule has not been published.',
+                    )
+                  else
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -216,7 +256,7 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Support Contact Card
+                  if (_supportContacts.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -234,50 +274,39 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            InkWell(
-                              onTap: () => PhoneLauncher.makePhoneCall(
-                                context,
-                                AppStrings.phoneWaterMaintenance,
-                              ),
-                              child: Image.asset(
+                        for (final contact in _supportContacts) ...[
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Image.asset(
                                 AppAssets.phoneIcon,
                                 width: 24,
                                 height: 26,
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Maintenance Team',
-                                  style: TextStyle(
-                                    color: AppColors.textMuted,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                InkWell(
-                                  onTap: () => PhoneLauncher.makePhoneCall(
-                                    context,
-                                    AppStrings.phoneWaterMaintenance,
-                                  ),
-                                  child: const Text(
-                                    AppStrings.phoneWaterMaintenance,
-                                    style: TextStyle(
-                                      color: AppColors.textDark,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      contact.name,
+                                      style: const TextStyle(
+                                        color: AppColors.textMuted,
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 2),
+                                    PlainPhoneText(
+                                      contact.phoneNumber ??
+                                          contact.description ??
+                                          'Number coming soon',
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),

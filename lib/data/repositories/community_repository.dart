@@ -1,104 +1,17 @@
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import '../../core/constants/app_assets.dart';
-import '../models/water_schedule_model.dart';
-import '../models/hospital_model.dart';
-import '../models/shuttle_route_model.dart';
 import '../models/update_notice_model.dart';
 import '../models/gym_schedule_model.dart';
-
+import '../services/water_schedule_api.dart';
+import '../models/water_schedule_model.dart';
 class CommunityRepository {
-  /// Loads water distribution timetable from bundled assets/data/waterSchedule.json
+  /// Loads the weekly water timetable stored in CommunityDb.
   static Future<List<WaterScheduleItem>> loadWaterSchedule() async {
-    final jsonStr = await rootBundle.loadString(AppAssets.waterScheduleJson);
-    final List<dynamic> jsonList = jsonDecode(jsonStr);
-    return jsonList.map((item) => WaterScheduleItem.fromJson(item)).toList();
-  }
-
-  /// Loads hospital coordinates from bundled assets/data/hospitals.json
-  static Future<List<HospitalLocation>> loadHospitals() async {
-    final jsonStr = await rootBundle.loadString(AppAssets.hospitalsJson);
-    final List<dynamic> jsonList = jsonDecode(jsonStr);
-    return jsonList.map((item) => HospitalLocation.fromJson(item)).toList();
-  }
-
-  static const String shuttleFromLillyA = 'lillyA';
-  static const String shuttleFromMainGate = 'mainGate';
-
-  /// Lilly A → Main Gate departure times.
-  static const List<ShuttleDeparture> lillyAToMainGate = [
-    ShuttleDeparture(id: 1, time: '07:30 AM'),
-    ShuttleDeparture(id: 2, time: '08:00 AM'),
-    ShuttleDeparture(id: 3, time: '09:00 AM'),
-    ShuttleDeparture(id: 4, time: '10:00 AM'),
-    ShuttleDeparture(id: 5, time: '11:00 AM'),
-    ShuttleDeparture(id: 6, time: '12:00 PM'),
-    ShuttleDeparture(id: 7, time: '02:15 PM'),
-    ShuttleDeparture(id: 8, time: '03:00 PM'),
-    ShuttleDeparture(id: 9, time: '04:00 PM'),
-    ShuttleDeparture(id: 10, time: '05:15 PM'),
-    ShuttleDeparture(id: 11, time: '06:15 PM'),
-    ShuttleDeparture(id: 12, time: '07:15 PM'),
-    ShuttleDeparture(id: 13, time: '08:00 PM'),
-  ];
-
-  /// Main Gate → Lilly A departure times.
-  static const List<ShuttleDeparture> mainGateToLillyA = [
-    ShuttleDeparture(id: 1, time: '07:45 AM'),
-    ShuttleDeparture(id: 2, time: '08:30 AM'),
-    ShuttleDeparture(id: 3, time: '09:30 AM'),
-    ShuttleDeparture(id: 4, time: '10:30 AM'),
-    ShuttleDeparture(id: 5, time: '11:30 AM'),
-    ShuttleDeparture(id: 6, time: '12:30 PM'),
-    ShuttleDeparture(id: 7, time: '02:45 PM'),
-    ShuttleDeparture(id: 8, time: '03:30 PM'),
-    ShuttleDeparture(id: 9, time: '04:30 PM'),
-    ShuttleDeparture(id: 10, time: '05:45 PM'),
-    ShuttleDeparture(id: 11, time: '06:45 PM'),
-    ShuttleDeparture(id: 12, time: '07:30 PM'),
-    ShuttleDeparture(id: 13, time: '08:30 PM'),
-  ];
-
-  static ShuttleRoute getShuttleRoute(String routeId) {
-    if (routeId == shuttleFromMainGate) {
-      return const ShuttleRoute(
-        id: shuttleFromMainGate,
-        toggleLabel: 'From Main Gate',
-        origin: 'Main Gate',
-        destination: 'Lilly A',
-        departures: mainGateToLillyA,
-      );
+    final api = WaterScheduleApi();
+    try {
+      return await api.getSchedule();
+    } finally {
+      api.dispose();
     }
-    return const ShuttleRoute(
-      id: shuttleFromLillyA,
-      toggleLabel: 'From Lilly A',
-      origin: 'Lilly A',
-      destination: 'Main Gate',
-      departures: lillyAToMainGate,
-    );
-  }
-
-  static ShuttleScheduleSnapshot getShuttleSchedule(
-    String routeId, [
-    DateTime? now,
-  ]) {
-    final route = getShuttleRoute(routeId);
-    final current = now ?? DateTime.now();
-    final nowMinutes = current.hour * 60 + current.minute;
-    ShuttleDeparture? next;
-    for (final departure in route.departures) {
-      if (departure.minutesFromMidnight > nowMinutes) {
-        next = departure;
-        break;
-      }
-    }
-    final isTomorrow = next == null && route.departures.isNotEmpty;
-    return ShuttleScheduleSnapshot(
-      route: route,
-      now: current,
-      nextDeparture: isTomorrow ? route.departures.first : next,
-      isTomorrow: isTomorrow,
-    );
   }
 
   /// Returns official community update notices

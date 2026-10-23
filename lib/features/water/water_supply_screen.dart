@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/network/api_client.dart';
 import '../../data/models/water_supply_model.dart';
 import '../../data/repositories/water_supply_repository.dart';
 
@@ -11,19 +12,26 @@ enum _ScheduleViewState { loading, loaded, empty, error }
 
 class WaterSupplyScreen extends StatefulWidget {
   final bool showBackButton;
+  final WaterSupplyRepository? repository;
 
-  const WaterSupplyScreen({super.key, this.showBackButton = false});
+  const WaterSupplyScreen({super.key, this.showBackButton = false, this.repository});
 
   @override
   State<WaterSupplyScreen> createState() => _WaterSupplyScreenState();
 }
 
 class _WaterSupplyScreenState extends State<WaterSupplyScreen> {
-  String _selectedBlockId = 'A';
+  late final WaterSupplyRepository _repository =
+      widget.repository ?? WaterSupplyRepository();
+  List<WaterBlock> _blocks = const [];
+  String? _selectedBlockId;
   late DateTime _selectedMonth;
   DateTime? _selectedDate;
   _ScheduleViewState _viewState = _ScheduleViewState.loading;
+  WaterSupplyMonth? _monthData;
   WaterMonthSchedule? _schedule;
+  String? _errorMessage;
+  int _requestId = 0;
 
   DateTime get _today {
     final now = DateTime.now();
@@ -35,33 +43,62 @@ class _WaterSupplyScreenState extends State<WaterSupplyScreen> {
     super.initState();
     final today = _today;
     _selectedMonth = DateTime(today.year, today.month);
-    _applySchedule();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final requestId = ++_requestId;
+    setState(() => _viewState = _ScheduleViewState.loading);
+    try {
+      if (_blocks.isEmpty) {
+        final blocks = await _repository.fetchBlocks();
+        if (!mounted || requestId != _requestId) return;
+        _blocks = blocks;
+      }
+      final month = await _repository.fetchPublishedMonth(
+        _selectedMonth.year,
+        _selectedMonth.month,
+      );
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _monthData = month;
+        if (month != null && month.blocks.isNotEmpty) _blocks = month.blocks;
+        if (!_blocks.any((b) => b.id == _selectedBlockId)) {
+          _selectedBlockId = _blocks.isEmpty ? null : _blocks.first.id;
+        }
+        _applySchedule();
+      });
+    } on ApiException catch (e) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _monthData = null;
+        _schedule = null;
+        _errorMessage = e.message;
+        _viewState = _ScheduleViewState.error;
+      });
+    }
   }
 
   void _applySchedule() {
+    final month = _monthData;
+    WaterBlock? block;
+    for (final candidate in _blocks) {
+      if (candidate.id == _selectedBlockId) block = candidate;
+    }
+    if (month == null || block == null) {
+      _schedule = null;
+      _viewState = _ScheduleViewState.empty;
+      return;
+    }
     DateTime? selected = _selectedDate;
     if (selected != null &&
         (selected.year != _selectedMonth.year ||
             selected.month != _selectedMonth.month)) {
       selected = null;
     }
-    try {
-      final schedule = WaterSupplyRepository.scheduleFor(
-        blockId: _selectedBlockId,
-        month: _selectedMonth,
-        selectedDate: selected,
-      );
-      _selectedDate = selected;
-      _schedule = schedule;
-      _viewState = _ScheduleViewState.loaded;
-    } catch (_) {
-      _schedule = null;
-      _viewState = _ScheduleViewState.error;
-    }
-  }
-
-  void _reload() {
-    setState(_applySchedule);
+    _selectedDate = selected;
+    _schedule = month.scheduleFor(block, selectedDate: selected);
+    _viewState = _ScheduleViewState.loaded;
   }
 
   void _selectBlock(String blockId) {
@@ -73,14 +110,12 @@ class _WaterSupplyScreenState extends State<WaterSupplyScreen> {
   }
 
   void _shiftMonth(int delta) {
-    setState(() {
-      _selectedMonth = DateTime(
-        _selectedMonth.year,
-        _selectedMonth.month + delta,
-      );
-      _selectedDate = null;
-      _applySchedule();
-    });
+    _selectedMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + delta,
+    );
+    _selectedDate = null;
+    _load();
   }
 
   void _selectDate(DateTime date) {
@@ -126,17 +161,23 @@ class _WaterSupplyScreenState extends State<WaterSupplyScreen> {
                             ),
                             child: Column(
                               children: [
-                                _BlockSelectorCard(
-                                  selectedBlockId: _selectedBlockId,
-                                  onSelect: _selectBlock,
-                                ),
-                                const SizedBox(height: 12),
+                                if (_blocks.isNotEmpty) ...[
+                                  _BlockSelectorCard(
+                                    blocks: _blocks,
+                                    selectedBlockId: _selectedBlockId,
+                                    onSelect: _selectBlock,
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
                                 _ScheduleCard(
                                   viewState: _viewState,
                                   schedule: _schedule,
+                                  monthLabel:
+                                      '${waterMonthName(_selectedMonth.month)} ${_selectedMonth.year}',
+                                  errorMessage: _errorMessage,
                                   selectedDate: _selectedDate,
                                   today: _today,
-                                  onRetry: _reload,
+                                  onRetry: _load,
                                   onPreviousMonth: () => _shiftMonth(-1),
                                   onNextMonth: () => _shiftMonth(1),
                                   onSelectDate: _selectDate,
@@ -292,10 +333,12 @@ class _WaterServiceHeader extends StatelessWidget {
 }
 
 class _BlockSelectorCard extends StatelessWidget {
-  final String selectedBlockId;
+  final List<WaterBlock> blocks;
+  final String? selectedBlockId;
   final ValueChanged<String> onSelect;
 
   const _BlockSelectorCard({
+    required this.blocks,
     required this.selectedBlockId,
     required this.onSelect,
   });
@@ -320,7 +363,7 @@ class _BlockSelectorCard extends StatelessWidget {
           final stacked = constraints.maxWidth < 340;
           final selector = Row(
             mainAxisSize: MainAxisSize.min,
-            children: WaterSupplyRepository.blocks
+            children: blocks
                 .map(
                   (block) => _BlockChip(
                     label: block.id,
@@ -439,6 +482,8 @@ class _BlockChip extends StatelessWidget {
 class _ScheduleCard extends StatelessWidget {
   final _ScheduleViewState viewState;
   final WaterMonthSchedule? schedule;
+  final String monthLabel;
+  final String? errorMessage;
   final DateTime? selectedDate;
   final DateTime today;
   final VoidCallback onRetry;
@@ -449,6 +494,8 @@ class _ScheduleCard extends StatelessWidget {
   const _ScheduleCard({
     required this.viewState,
     required this.schedule,
+    required this.monthLabel,
+    required this.errorMessage,
     required this.selectedDate,
     required this.today,
     required this.onRetry,
@@ -483,17 +530,36 @@ class _ScheduleCard extends StatelessWidget {
               child: CircularProgressIndicator(color: AppColors.waterBlue),
             ),
           ),
-          _ScheduleViewState.error => _MessageState(
+          _ScheduleViewState.error => Column(
             key: const ValueKey('error'),
-            title: 'Unable to update schedule',
-            message: 'Check your internet connection and try again.',
-            actionLabel: 'Try Again',
-            onAction: onRetry,
+            children: [
+              _MonthNavigation(
+                label: monthLabel,
+                onPrevious: onPreviousMonth,
+                onNext: onNextMonth,
+              ),
+              _MessageState(
+                title: 'Unable to update schedule',
+                message: errorMessage ??
+                    'Check your internet connection and try again.',
+                actionLabel: 'Try Again',
+                onAction: onRetry,
+              ),
+            ],
           ),
-          _ScheduleViewState.empty => _MessageState(
-            key: const ValueKey('empty'),
-            title: 'No schedule available',
-            message: 'There is currently no published water supply schedule for this month.',
+          _ScheduleViewState.empty => Column(
+            key: ValueKey('empty-$monthLabel'),
+            children: [
+              _MonthNavigation(
+                label: monthLabel,
+                onPrevious: onPreviousMonth,
+                onNext: onNextMonth,
+              ),
+              const _MessageState(
+                title: 'No schedule available',
+                message: 'There is currently no published water supply schedule for this month.',
+              ),
+            ],
           ),
           _ScheduleViewState.loaded when schedule != null => _LoadedSchedule(
             key: ValueKey('${schedule!.block.id}-${schedule!.monthLabel}'),

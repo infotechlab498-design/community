@@ -124,53 +124,29 @@ class PrayerGreeting extends StatelessWidget {
   }
 }
 
-class PrayerLocationButton extends StatelessWidget {
-  final PrayerLocation location;
-  final VoidCallback onTap;
-
-  const PrayerLocationButton({
-    super.key,
-    required this.location,
-    required this.onTap,
-  });
+class PrayerTimetableLabel extends StatelessWidget {
+  const PrayerTimetableLabel({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Change prayer location, currently ${location.label}',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadii.mediumAll,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.location_on_rounded,
-                size: 18,
-                color: AppColors.primaryPurple,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  location.label,
-                  style: const TextStyle(
-                    color: AppColors.prayerMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.mosque_rounded, size: 18, color: AppColors.primaryPurple),
+          SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'Community mosque timetable',
+              style: TextStyle(
                 color: AppColors.prayerMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -1,40 +1,42 @@
-class HospitalLocation {
+class Hospital {
   final int id;
   final String name;
+  final String address;
   final double latitude;
   final double longitude;
-  final double? distanceMeters;
-  final String? distanceMiles;
+  final int sortOrder;
 
-  const HospitalLocation({
+  const Hospital({
     required this.id,
     required this.name,
+    required this.address,
     required this.latitude,
     required this.longitude,
-    this.distanceMeters,
-    this.distanceMiles,
+    this.sortOrder = 0,
   });
 
-  factory HospitalLocation.fromJson(Map<String, dynamic> json) {
-    return HospitalLocation(
+  factory Hospital.fromJson(Map<String, dynamic> json) {
+    return Hospital(
       id: json['id'] as int,
       name: json['name'] as String,
+      address: json['address'] as String,
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
+      sortOrder: (json['sortOrder'] as int?) ?? 0,
     );
   }
 
-  HospitalLocation copyWithDistance({
-    required double distanceMeters,
-    required String distanceMiles,
-  }) {
-    return HospitalLocation(
-      id: id,
-      name: name,
-      latitude: latitude,
-      longitude: longitude,
-      distanceMeters: distanceMeters,
-      distanceMiles: distanceMiles,
-    );
-  }
+  Map<String, dynamic> toRequestJson() => {
+        'name': name,
+        'address': address,
+        'latitude': latitude,
+        'longitude': longitude,
+        'sortOrder': sortOrder,
+      };
+
+  /// Opens in the external Maps app or browser; no location permission needed.
+  Uri get mapsUri => Uri.https('www.google.com', '/maps/search/', {
+        'api': '1',
+        'query': '$latitude,$longitude',
+      });
 }

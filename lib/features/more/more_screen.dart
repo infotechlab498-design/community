@@ -8,6 +8,7 @@ import '../gym/gym_timing_screen.dart';
 import '../updates/official_updates_screen.dart';
 import '../help/help_screen.dart';
 import '../privacy/privacy_policy_screen.dart';
+import '../auth/adminLogin.dart';
 import '../namaztiming/prayer_times_screen.dart';
 
 class MoreSectionItem {
@@ -59,6 +60,11 @@ class MoreScreen extends StatelessWidget {
         title: 'Privacy Policy',
         icon: FontAwesomeIcons.shieldHalved,
         destination: PrivacyPolicyScreen(showBackButton: true),
+      ),
+      const MoreSectionItem(
+        title: 'Admin Login',
+        icon: FontAwesomeIcons.shieldHalved,
+        destination: AdminLoginScreen(),
       ),
     ];
 

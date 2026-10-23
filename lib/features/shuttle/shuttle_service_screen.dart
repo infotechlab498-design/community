@@ -2,10 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
-import '../../core/utils/phone_launcher.dart';
+import '../../core/network/api_client.dart';
+import '../../data/models/contact_model.dart';
 import '../../data/models/shuttle_route_model.dart';
-import '../../data/repositories/community_repository.dart';
+import '../../data/repositories/contacts_repository.dart';
+import '../../data/repositories/shuttle_repository.dart';
+import '../../shared/widgets/async_state_views.dart';
 import '../../shared/widgets/header_top_app_bar.dart';
 
 class ShuttleServiceScreen extends StatefulWidget {
@@ -18,7 +20,13 @@ class ShuttleServiceScreen extends StatefulWidget {
 }
 
 class _ShuttleServiceScreenState extends State<ShuttleServiceScreen> {
-  String _activeRoute = CommunityRepository.shuttleFromLillyA;
+  final ShuttleRepository _repository = ShuttleRepository();
+  final ContactsRepository _contactsRepository = ContactsRepository();
+  List<ShuttleRoute> _routes = const [];
+  List<CommunityContact> _supportContacts = const [];
+  String? _activeRouteId;
+  bool _loading = true;
+  String? _error;
   Timer? _clock;
   final ScrollController _listController = ScrollController();
 
@@ -28,7 +36,7 @@ class _ShuttleServiceScreenState extends State<ShuttleServiceScreen> {
     _clock = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) setState(() {});
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToNext());
+    _load();
   }
 
   @override
@@ -38,17 +46,60 @@ class _ShuttleServiceScreenState extends State<ShuttleServiceScreen> {
     super.dispose();
   }
 
-  ShuttleScheduleSnapshot get _schedule =>
-      CommunityRepository.getShuttleSchedule(_activeRoute);
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final routes = await _repository.fetchRoutes();
+      List<CommunityContact> contacts = const [];
+      try {
+        contacts = await _contactsRepository.fetchContacts(
+            category: ContactCategory.shuttle);
+      } on ApiException {
+        // The timetable is still useful without the support number.
+      }
+      if (!mounted) return;
+      setState(() {
+        _routes = routes;
+        _supportContacts = contacts;
+        _activeRouteId = routes.any((r) => r.id == _activeRouteId)
+            ? _activeRouteId
+            : (routes.isEmpty ? null : routes.first.id);
+        _loading = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToNext());
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.message;
+      });
+    }
+  }
+
+  ShuttleRoute? get _activeRoute {
+    for (final route in _routes) {
+      if (route.id == _activeRouteId) return route;
+    }
+    return null;
+  }
+
+  ShuttleScheduleSnapshot? get _schedule {
+    final route = _activeRoute;
+    return route == null ? null : ShuttleScheduleSnapshot.compute(route);
+  }
 
   void _selectRoute(String routeId) {
-    setState(() => _activeRoute = routeId);
+    setState(() => _activeRouteId = routeId);
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToNext());
   }
 
   void _scrollToNext() {
     if (!_listController.hasClients) return;
     final snapshot = _schedule;
+    if (snapshot == null) return;
     final next = snapshot.nextDeparture;
     if (next == null) return;
     final index = snapshot.route.departures.indexWhere((d) => d.id == next.id);
@@ -67,40 +118,62 @@ class _ShuttleServiceScreenState extends State<ShuttleServiceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final snapshot = _schedule;
-    final route = snapshot.route;
-
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       appBar: HeaderTopAppBar(showBackButton: widget.showBackButton),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Shuttle Service Timing',
-              style: TextStyle(
-                color: AppColors.textDark,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeading(),
+              const SizedBox(height: 24),
+              ..._buildContent(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildContent() {
+    if (_loading && _routes.isEmpty) {
+      return const [LoadingStateView(message: 'Loading shuttle timings…')];
+    }
+    if (_error != null && _routes.isEmpty) {
+      return [ErrorStateView(message: _error!, onRetry: _load)];
+    }
+    final snapshot = _schedule;
+    if (snapshot == null) {
+      return const [
+        EmptyStateView(
+          icon: Icons.directions_bus_outlined,
+          title: 'No shuttle routes yet',
+          message: 'The community office has not published shuttle timings.',
+        ),
+      ];
+    }
+    final route = snapshot.route;
+
+    return [
+            if (_routes.length > 1) ...[
+              _RouteToggle(
+                routes: _routes,
+                activeRoute: route.id,
+                onSelect: _selectRoute,
               ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Official departure times between Lilly A and Main Gate. The next trip is highlighted automatically.',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 24),
-            _RouteToggle(
-              activeRoute: _activeRoute,
-              onSelect: _selectRoute,
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
+            ],
+            if (route.departures.isEmpty)
+              const EmptyStateView(
+                icon: Icons.schedule_outlined,
+                title: 'No departures listed',
+                message: 'Timings for this route will appear once published.',
+              )
+            else ...[
             _NextTripCard(snapshot: snapshot),
             const SizedBox(height: 20),
             Row(
@@ -164,30 +237,54 @@ class _ShuttleServiceScreenState extends State<ShuttleServiceScreen> {
                 ),
               ),
             ),
+            ],
             const SizedBox(height: 24),
-            _SupportCard(
-              onCall: () => PhoneLauncher.makePhoneCall(
-                context,
-                AppStrings.phoneBuildingMaintenance,
+            if (_supportContacts.isNotEmpty) ...[
+              _SupportCard(contact: _supportContacts.first),
+              const SizedBox(height: 16),
+            ],
+            const _TravelNoticeCard(),
+            if (route.departures.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _RouteSummaryCard(route: route),
+            ],
+            const SizedBox(height: 40),
+    ];
+  }
+
+  Widget _buildHeading() {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+            Text(
+              'Shuttle Service Timing',
+              style: TextStyle(
+                color: AppColors.textDark,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
-            const _TravelNoticeCard(),
-            const SizedBox(height: 16),
-            _RouteSummaryCard(route: route),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
+            SizedBox(height: 6),
+            Text(
+              'Official departure times for the community shuttle. The next trip is highlighted automatically.',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+      ],
     );
   }
 }
 
 class _RouteToggle extends StatelessWidget {
+  final List<ShuttleRoute> routes;
   final String activeRoute;
   final ValueChanged<String> onSelect;
 
   const _RouteToggle({
+    required this.routes,
     required this.activeRoute,
     required this.onSelect,
   });
@@ -202,16 +299,12 @@ class _RouteToggle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _ToggleTab(
-            label: 'From Lilly A',
-            selected: activeRoute == CommunityRepository.shuttleFromLillyA,
-            onTap: () => onSelect(CommunityRepository.shuttleFromLillyA),
-          ),
-          _ToggleTab(
-            label: 'From Main Gate',
-            selected: activeRoute == CommunityRepository.shuttleFromMainGate,
-            onTap: () => onSelect(CommunityRepository.shuttleFromMainGate),
-          ),
+          for (final route in routes)
+            _ToggleTab(
+              label: route.toggleLabel,
+              selected: activeRoute == route.id,
+              onTap: () => onSelect(route.id),
+            ),
         ],
       ),
     );
@@ -397,41 +490,53 @@ class _DepartureRow extends StatelessWidget {
 }
 
 class _SupportCard extends StatelessWidget {
-  final VoidCallback onCall;
+  final CommunityContact contact;
 
-  const _SupportCard({required this.onCall});
+  const _SupportCard({required this.contact});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.lightPinkPill,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onCall,
+    final number = contact.phoneNumber;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.lightPinkPill,
         borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(AppAssets.needHelp, width: 44, height: 42),
-              ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Text(
-                  'Need a ride update? Call community support.',
-                  style: TextStyle(
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(AppAssets.needHelp, width: 44, height: 42),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need a ride update? Contact ${contact.name}.',
+                  style: const TextStyle(
                     color: AppColors.brandMagenta,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-              const Icon(Icons.phone, color: AppColors.brandMagenta, size: 20),
-            ],
+                if (number != null) ...[
+                  const SizedBox(height: 4),
+                  PlainPhoneText(
+                    number,
+                    style: const TextStyle(
+                      color: AppColors.brandMagenta,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

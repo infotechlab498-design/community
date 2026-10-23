@@ -4,40 +4,6 @@ enum PrayerType { fajr, dhuhr, asr, maghrib, isha }
 
 enum PrayerRowStatus { past, current, upcoming }
 
-class PrayerLocation {
-  final String id;
-  final String city;
-  final String country;
-
-  const PrayerLocation({
-    required this.id,
-    required this.city,
-    required this.country,
-  });
-
-  String get label => '$city, $country';
-
-  static const rawalpindi = PrayerLocation(
-    id: 'rawalpindi',
-    city: 'Rawalpindi',
-    country: 'Pakistan',
-  );
-
-  static const islamabad = PrayerLocation(
-    id: 'islamabad',
-    city: 'Islamabad',
-    country: 'Pakistan',
-  );
-
-  static const dhaHomes = PrayerLocation(
-    id: 'dha-homes',
-    city: 'DHA Homes',
-    country: 'Pakistan',
-  );
-
-  static const List<PrayerLocation> options = [rawalpindi, islamabad, dhaHomes];
-}
-
 class PrayerTime {
   final PrayerType type;
   final String name;
@@ -72,7 +38,6 @@ class PrayerTime {
 }
 
 class PrayerDaySnapshot {
-  final PrayerLocation location;
   final List<PrayerTime> prayers;
   final PrayerTime currentPrayer;
   final PrayerTime nextPrayer;
@@ -81,7 +46,6 @@ class PrayerDaySnapshot {
   final DateTime now;
 
   const PrayerDaySnapshot({
-    required this.location,
     required this.prayers,
     required this.currentPrayer,
     required this.nextPrayer,
@@ -91,7 +55,6 @@ class PrayerDaySnapshot {
   });
 
   factory PrayerDaySnapshot.compute({
-    required PrayerLocation location,
     required List<PrayerTime> prayers,
     required DateTime now,
   }) {
@@ -102,7 +65,6 @@ class PrayerDaySnapshot {
 
     if (now.isBefore(fajr.startTime)) {
       return PrayerDaySnapshot(
-        location: location,
         prayers: ordered,
         currentPrayer: isha,
         nextPrayer: fajr,
@@ -128,7 +90,6 @@ class PrayerDaySnapshot {
         fajr.startTime.minute,
       );
       return PrayerDaySnapshot(
-        location: location,
         prayers: ordered,
         currentPrayer: current,
         nextPrayer: fajr,
@@ -141,7 +102,6 @@ class PrayerDaySnapshot {
     final currentIndex = ordered.indexWhere((p) => p.type == current.type);
     final next = ordered[currentIndex + 1];
     return PrayerDaySnapshot(
-      location: location,
       prayers: ordered,
       currentPrayer: current,
       nextPrayer: next,
@@ -191,4 +151,35 @@ class PrayerDaySnapshot {
     };
     return '${prayer.name} prayer. $suffix';
   }
+}
+
+/// One admin-managed row from `GET /api/prayer-times`; [time] is "HH:mm".
+class PrayerTimeSetting {
+  final int id;
+  final String name;
+  final String time;
+  final int sortOrder;
+
+  const PrayerTimeSetting({
+    required this.id,
+    required this.name,
+    required this.time,
+    required this.sortOrder,
+  });
+
+  factory PrayerTimeSetting.fromJson(Map<String, dynamic> json) {
+    return PrayerTimeSetting(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      time: json['time'] as String,
+      sortOrder: (json['sortOrder'] as int?) ?? 0,
+    );
+  }
+
+  PrayerTimeSetting copyWith({String? time}) => PrayerTimeSetting(
+        id: id,
+        name: name,
+        time: time ?? this.time,
+        sortOrder: sortOrder,
+      );
 }
