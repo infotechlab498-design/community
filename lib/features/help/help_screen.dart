@@ -75,7 +75,7 @@ class HelpScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.surfaceLight,
-      appBar: HeaderTopAppBar(showBackButton: showBackButton),
+      appBar: buildHeaderTopAppBar(context, showBackButton: showBackButton),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Column(

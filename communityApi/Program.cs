@@ -92,11 +92,10 @@ if (app.Environment.IsDevelopment())
 // 6. Configure the HTTP request pipeline.
 // HTTPS is terminated by the host (usama498.bsite.net). Redirecting again inside
 // the app makes every request bounce between http and https.
+// CORS must run in all environments so the Flutter website (browser) can call
+// this API. Native Android/iOS apps are unaffected by CORS.
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("Frontend");
-}
+app.UseCors("Frontend");
 
 app.UseAuthentication();
 app.UseAuthorization();

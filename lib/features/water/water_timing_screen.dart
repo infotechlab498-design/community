@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/network/api_client.dart';
+import '../../core/responsive/layout_breakpoints.dart';
 import '../../data/models/contact_model.dart';
 import '../../data/repositories/contacts_repository.dart';
 import '../../shared/widgets/async_state_views.dart';
@@ -85,9 +86,222 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
   }
 
   EdgeInsets _pagePadding(BuildContext context) {
+    final website = LayoutBreakpoints.useWebsiteLayout(context);
+    if (website) {
+      return const EdgeInsets.fromLTRB(28, 24, 28, 40);
+    }
     final width = MediaQuery.sizeOf(context).width;
     final horizontal = width < 360 ? 16.0 : width < 400 ? 20.0 : 24.0;
     return EdgeInsets.symmetric(horizontal: horizontal, vertical: 16);
+  }
+
+  Widget _heroCard({required double height}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: height,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(AppAssets.waterPlant),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Container(
+          padding: const EdgeInsets.only(top: 80, left: 24, bottom: 20),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x992C3436), Color(0x002C3436)],
+            ),
+          ),
+          child: const Text(
+            'Main Filtration\nPlant',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _todayCard({
+    required bool todayIsOpen,
+    required String todayTimeText,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.waterLightGreen,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x12306952),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            AppAssets.communityIcon,
+            width: 40,
+            height: 44,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  todayIsOpen ? 'Open today' : 'Closed today',
+                  style: const TextStyle(
+                    color: AppColors.waterDarkGreen,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _AdaptiveHoursText(
+                  time: todayTimeText,
+                  color: AppColors.waterDarkGreen,
+                  alignEnd: false,
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Standard community distribution hours',
+                  style: TextStyle(
+                    color: AppColors.textBody,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _scheduleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Image.asset(
+              AppAssets.weeklySchedule,
+              width: 18,
+              height: 20,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 8),
+            const Flexible(
+              child: Text(
+                'Weekly Schedule',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.textDark,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_error != null && _schedule.isEmpty)
+          ErrorStateView(message: _error!, onRetry: _loadData)
+        else if (_schedule.isEmpty)
+          const EmptyStateView(
+            icon: Icons.water_drop_outlined,
+            title: 'No water timings yet',
+            message: 'The weekly water schedule has not been published.',
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceCard,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: _schedule.map((item) {
+                return _ScheduleDayTile(
+                  item: item,
+                  isToday: item.id == _todayIndex,
+                );
+              }).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _supportSection() {
+    if (_supportContacts.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Support Contact',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          for (final contact in _supportContacts) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Image.asset(
+                  AppAssets.phoneIcon,
+                  width: 24,
+                  height: 26,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        contact.name,
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      PlainPhoneText(
+                        contact.phoneNumber ??
+                            contact.description ??
+                            'Number coming soon',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -96,223 +310,86 @@ class _WaterTimingScreenState extends State<WaterTimingScreen> {
           (item) => item?.id == _todayIndex,
           orElse: () => null,
         );
-    final todayTimeText = todayItem?.time ?? '9:00 AM – 11:00 AM & 4:00 PM - 8:00 PM';
+    final todayTimeText =
+        todayItem?.time ?? '9:00 AM – 11:00 AM & 4:00 PM - 8:00 PM';
     final todayIsOpen = (todayItem?.status ?? 'Open').toLowerCase() != 'closed';
+    final website = LayoutBreakpoints.useWebsiteLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
-      appBar: HeaderTopAppBar(showBackButton: widget.showBackButton),
+      appBar:
+          buildHeaderTopAppBar(context, showBackButton: widget.showBackButton),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primaryPurple),
             )
           : SingleChildScrollView(
               padding: _pagePadding(context),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Hero Card: Main Filtration Plant
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(AppAssets.waterPlant),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.only(top: 80, left: 24, bottom: 20),
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0x992C3436), Color(0x002C3436)],
-                          ),
-                        ),
-                        child: const Text(
-                          'Main Filtration\nPlant',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Today Status Card
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.waterLightGreen,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0x12306952),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          AppAssets.communityIcon,
-                          width: 40,
-                          height: 44,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                todayIsOpen ? 'Open today' : 'Closed today',
-                                style: const TextStyle(
-                                  color: AppColors.waterDarkGreen,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              _AdaptiveHoursText(
-                                time: todayTimeText,
-                                color: AppColors.waterDarkGreen,
-                                alignEnd: false,
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Standard community distribution hours',
-                                style: TextStyle(
-                                  color: AppColors.textBody,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Weekly Schedule Header
-                  Row(
-                    children: [
-                      Image.asset(
-                        AppAssets.weeklySchedule,
-                        width: 18,
-                        height: 20,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(width: 8),
-                      const Flexible(
-                        child: Text(
-                          'Weekly Schedule',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textDark,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (_error != null && _schedule.isEmpty)
-                    ErrorStateView(message: _error!, onRetry: _loadData)
-                  else if (_schedule.isEmpty)
-                    const EmptyStateView(
-                      icon: Icons.water_drop_outlined,
-                      title: 'No water timings yet',
-                      message: 'The weekly water schedule has not been published.',
-                    )
-                  else
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceCard,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      children: _schedule.map((item) {
-                        return _ScheduleDayTile(
-                          item: item,
-                          isToday: item.id == _todayIndex,
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  if (_supportContacts.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
+              child: website
+                  ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Support Contact',
+                          'Water plant timing',
                           style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
                             color: AppColors.textDark,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        for (final contact in _supportContacts) ...[
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Image.asset(
-                                AppAssets.phoneIcon,
-                                width: 24,
-                                height: 26,
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      contact.name,
-                                      style: const TextStyle(
-                                        color: AppColors.textMuted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    PlainPhoneText(
-                                      contact.phoneNumber ??
-                                          contact.description ??
-                                          'Number coming soon',
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Weekly filtration plant schedule for the community.',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 14,
                           ),
-                        ],
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: Column(
+                                children: [
+                                  _heroCard(height: 240),
+                                  const SizedBox(height: 20),
+                                  _todayCard(
+                                    todayIsOpen: todayIsOpen,
+                                    todayTimeText: todayTimeText,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _supportSection(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            Expanded(
+                              flex: 6,
+                              child: _scheduleSection(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _heroCard(height: 200),
+                        const SizedBox(height: 20),
+                        _todayCard(
+                          todayIsOpen: todayIsOpen,
+                          todayTimeText: todayTimeText,
+                        ),
+                        const SizedBox(height: 24),
+                        _scheduleSection(),
+                        const SizedBox(height: 20),
+                        _supportSection(),
+                        const SizedBox(height: 30),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                ],
-              ),
             ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/network/api_client.dart';
+import '../../core/responsive/layout_breakpoints.dart';
 import '../../data/models/water_supply_model.dart';
 import '../../data/repositories/water_supply_repository.dart';
 
@@ -74,6 +75,15 @@ class _WaterSupplyScreenState extends State<WaterSupplyScreen> {
         _monthData = null;
         _schedule = null;
         _errorMessage = e.message;
+        _viewState = _ScheduleViewState.error;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _monthData = null;
+        _schedule = null;
+        _errorMessage =
+            'Unable to reach the server. Check your connection.';
         _viewState = _ScheduleViewState.error;
       });
     }
@@ -151,7 +161,11 @@ class _WaterSupplyScreenState extends State<WaterSupplyScreen> {
                       child: Align(
                         alignment: Alignment.topCenter,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 560),
+                          constraints: BoxConstraints(
+                            maxWidth: LayoutBreakpoints.useWebsiteLayout(context)
+                                ? 720
+                                : 560,
+                          ),
                           child: Padding(
                             padding: EdgeInsets.fromLTRB(
                               horizontal,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_assets.dart';
@@ -14,27 +15,28 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   Timer? _timer;
 
+  void _goHome() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MainShellScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: Duration(milliseconds: kIsWeb ? 200 : 350),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 2000), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const MainShellScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 350),
-          ),
-        );
-      }
-    });
+    // Website: skip the long mobile splash so the site feels instant.
+    final delay = kIsWeb
+        ? const Duration(milliseconds: 350)
+        : const Duration(milliseconds: 2000);
+    _timer = Timer(delay, _goHome);
   }
 
   @override

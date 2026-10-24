@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+
+import 'api_config.dart';
 
 /// Raised for any non-success API response or network failure.
 class ApiException implements Exception {
@@ -33,15 +33,10 @@ class ApiClient {
 
   static const String tokenKey = 'auth_token';
   static const Duration _timeout = Duration(seconds: 20);
-  static const String _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
 
-  /// Override with `--dart-define=API_BASE_URL=http://<host>:5162`.
-  /// The Android emulator reaches the host machine through 10.0.2.2.
-  static String get baseUrl {
-    if (_definedBaseUrl.isNotEmpty) return _definedBaseUrl;
-    if (!kIsWeb && Platform.isAndroid) return 'http://10.0.2.2:5162';
-    return 'http://localhost:5162';
-  }
+  /// Central host from [ApiConfig].
+  /// Override any build with `--dart-define=API_BASE_URL=https://host`.
+  static String get baseUrl => ApiConfig.baseUrl;
 
   final http.Client _client;
   final FlutterSecureStorage _storage;
@@ -92,10 +87,12 @@ class ApiClient {
       response = await http.Response.fromStream(streamed).timeout(_timeout);
     } on TimeoutException {
       throw const ApiException('The server took too long to respond.');
-    } on SocketException {
+    } on http.ClientException {
+      // Covers mobile socket failures and browser/web network errors.
       throw const ApiException(
           'Unable to reach the server. Check your connection.');
-    } on http.ClientException {
+    } catch (error) {
+      if (error is ApiException) rethrow;
       throw const ApiException(
           'Unable to reach the server. Check your connection.');
     }

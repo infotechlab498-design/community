@@ -284,7 +284,7 @@ class _OfficialUpdatesScreenState extends State<OfficialUpdatesScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: HeaderTopAppBar(showBackButton: widget.showBackButton),
+      appBar: buildHeaderTopAppBar(context, showBackButton: widget.showBackButton),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(

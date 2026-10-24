@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
+import '../../core/network/api_client.dart';
 import '../../data/models/prayer_time_model.dart';
 import '../../data/repositories/prayer_times_repository.dart';
 import 'prayer_details_screen.dart';
@@ -27,6 +28,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   PrayerDaySnapshot? _snapshot;
   bool _loading = true;
   bool _error = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -49,6 +51,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     setState(() {
       _loading = _snapshot == null;
       _error = false;
+      _errorMessage = null;
     });
     try {
       final snapshot = await _repository.loadSchedule();
@@ -57,12 +60,21 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         _snapshot = snapshot;
         _loading = false;
         _error = false;
+        _errorMessage = null;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = true;
+        _errorMessage = e.message;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _loading = false;
         _error = true;
+        _errorMessage = 'Unable to reach the server. Check your connection.';
       });
     }
   }
@@ -104,7 +116,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     child: Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 560),
+                        constraints: BoxConstraints(
+                          maxWidth: constraints.maxWidth >= 900 ? 720 : 560,
+                        ),
                         child: _buildBody(now),
                       ),
                     ),
@@ -142,7 +156,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             onOpenSettings: _openSettings,
           ),
           const SizedBox(height: 48),
-          _ErrorCard(onRetry: _load),
+          _ErrorCard(
+            message: _errorMessage,
+            onRetry: _load,
+          ),
         ],
       );
     }
@@ -188,8 +205,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
 class _ErrorCard extends StatelessWidget {
   final VoidCallback onRetry;
+  final String? message;
 
-  const _ErrorCard({required this.onRetry});
+  const _ErrorCard({required this.onRetry, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -213,10 +231,10 @@ class _ErrorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'Check your connection and try again.',
+          Text(
+            message ?? 'Check your connection and try again.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.prayerMuted, fontSize: 13),
+            style: const TextStyle(color: AppColors.prayerMuted, fontSize: 13),
           ),
           const SizedBox(height: AppSpacing.lg),
           FilledButton(

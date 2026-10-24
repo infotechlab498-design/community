@@ -133,7 +133,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     return Scaffold(
       backgroundColor: AppColors.surfaceLight,
-      appBar: HeaderTopAppBar(showBackButton: widget.showBackButton),
+      appBar: buildHeaderTopAppBar(context, showBackButton: widget.showBackButton),
       body: _checkingSession
           ? const Center(child: CircularProgressIndicator(color: AppColors.primaryPurple))
           : ListView(

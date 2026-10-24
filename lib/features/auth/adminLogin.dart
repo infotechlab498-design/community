@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/network/api_client.dart';
+import '../../core/responsive/layout_breakpoints.dart';
 import '../../core/services/auth_service.dart';
 import '../../shared/widgets/header_top_app_bar.dart';
 import '../dashboard/admindashboard.dart';
@@ -88,34 +89,89 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surfaceLight,
-      appBar: HeaderTopAppBar(
+      appBar: buildHeaderTopAppBar(
+        context,
         showBackButton: widget.showBackButton,
       ),
       body: SafeArea(
         child: Form(
           key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
-            children: [
-              const Text(
-                'Admin Login',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final website = LayoutBreakpoints.useWebsiteLayout(context);
+              final form = ListView(
+                padding: EdgeInsets.fromLTRB(
+                  website ? 32 : 24,
+                  website ? 40 : 16,
+                  website ? 32 : 24,
+                  40,
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Sign in to manage community updates.',
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.5,
-                  color: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 28),
+                children: [
+                  if (website) ...[
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 440),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'Admin Login',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Sign in to manage community updates.',
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.5,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            _buildFields(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    const Text(
+                      'Admin Login',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Sign in to manage community updates.',
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    _buildFields(),
+                  ],
+                ],
+              );
+              return form;
+            },
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -206,10 +262,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       )
                     : const Text('Sign in'),
               ),
-            ],
-          ),
-        ),
-      ),
+      ],
     );
   }
 }

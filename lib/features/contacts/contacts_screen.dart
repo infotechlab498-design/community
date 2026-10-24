@@ -79,7 +79,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
-      appBar: HeaderTopAppBar(showBackButton: widget.showBackButton),
+      appBar: buildHeaderTopAppBar(context, showBackButton: widget.showBackButton),
       body: RefreshIndicator(
         onRefresh: _load,
         child: SingleChildScrollView(

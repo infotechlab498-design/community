@@ -9,7 +9,8 @@
 - [x] High-res icon: icons/icon-512.png
 - [x] Feature graphic: graphics/feature-graphic-1024x500.png
 - [x] Phone screenshots: screenshots/
-- [x] Signed release AAB: play-store/aab/neighborhub-1.0.3.aab (version 1.0.3+4)
+- [x] Signed release AAB: play-store/aab/neighborhub-1.0.4.aab (version 1.0.4+5)
+- [x] Release API base URL: https://usama498.bsite.net (ApiConfig; override via API_BASE_URL)
 - [x] App icon + favicon generated from play-store/icons/icon-source.png (Android/iOS/Web)
 - [x] Maps API key moved to android/local.properties (restrict this key in Google Cloud)
 

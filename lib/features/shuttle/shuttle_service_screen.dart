@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/network/api_client.dart';
+import '../../core/responsive/layout_breakpoints.dart';
 import '../../data/models/contact_model.dart';
 import '../../data/models/shuttle_route_model.dart';
 import '../../data/repositories/contacts_repository.dart';
@@ -118,17 +119,42 @@ class _ShuttleServiceScreenState extends State<ShuttleServiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final website = LayoutBreakpoints.useWebsiteLayout(context);
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
-      appBar: HeaderTopAppBar(showBackButton: widget.showBackButton),
+      appBar: buildHeaderTopAppBar(context, showBackButton: widget.showBackButton),
       body: RefreshIndicator(
         onRefresh: _load,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: EdgeInsets.fromLTRB(
+            website ? 28 : 24,
+            website ? 24 : 16,
+            website ? 28 : 24,
+            16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (website) ...[
+                const Text(
+                  'Shuttle service',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Route departures and next bus times for the community.',
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
               _buildHeading(),
               const SizedBox(height: 24),
               ..._buildContent(),

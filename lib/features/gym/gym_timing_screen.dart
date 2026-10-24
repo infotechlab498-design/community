@@ -55,7 +55,7 @@ class _GymTimingScreenState extends State<GymTimingScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
-      appBar: HeaderTopAppBar(showBackButton: widget.showBackButton),
+      appBar: buildHeaderTopAppBar(context, showBackButton: widget.showBackButton),
       body: RefreshIndicator(
         onRefresh: _load,
         child: SingleChildScrollView(

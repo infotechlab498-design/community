@@ -19,10 +19,13 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="NeighborHub — community water timings, shuttle, emergency contacts, and updates.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#7B2CBF">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="NeighborHub">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -31,16 +34,55 @@
 
   <title>NeighborHub</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #F5F3F8;
+    }
+    .nh-loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: #5B2C87;
+      background: #F5F3F8;
+    }
+    .nh-loading img {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+    }
+    .nh-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(91, 44, 135, 0.2);
+      border-top-color: #7B2CBF;
+      border-radius: 50%;
+      animation: nh-spin 0.8s linear infinite;
+    }
+    @keyframes nh-spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <div class="nh-loading" id="loading">
+    <img src="icons/Icon-192.png" alt="NeighborHub" width="72" height="72">
+    <div class="nh-spinner" aria-hidden="true"></div>
+    <div>Loading NeighborHub…</div>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var el = document.getElementById('loading');
+      if (el) el.remove();
+    });
+  </script>
 </body>
 </html>

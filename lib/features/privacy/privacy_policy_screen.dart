@@ -27,7 +27,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surfaceLight,
-      appBar: HeaderTopAppBar(showBackButton: showBackButton),
+      appBar: buildHeaderTopAppBar(context, showBackButton: showBackButton),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
         children: [
